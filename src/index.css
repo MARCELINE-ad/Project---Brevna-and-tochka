@@ -19,6 +19,17 @@ body{
     margin: 31px auto;
 }
 
+header a{
+  text-decoration: none;
+  outline: none;
+  color: #000;
+}
+footer a{
+    text-decoration: none;
+    outline: none;
+    color: #fff;
+}
+
 header .nav{
     max-width: 1252px;
     display: flex;
@@ -201,13 +212,4 @@ footer .VK{
     border-radius: 20px;
     margin-top: 20px;
     margin-left: 34px;
-}
-
-/*Хуйня без которой что то не работает нихуя*/
-footer button{
-    background: none;
-    border: none;
-    cursor: pointer;
-    font: inherit;
-    padding: 0;
 }

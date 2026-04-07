@@ -1,11 +1,19 @@
 import React from "react"
+import { FaShoppingCart } from "react-icons/fa";
+import { FaRegUser } from "react-icons/fa";
+import { Route, Routes, Link } from "react-router-dom";
+
+import Profil from "../Pages/Profil";
+import ShoppingCard from "../Pages/ShoppingCard";
+import NonPages404 from "../Pages/NonPages404";
+import HomePages from "../Pages/HomePages";
 
 export default function Header() {
   return (
     <header>
       <div className="nav">
-          <div className="brand_logo"/>
-          <a className="brand_text">
+          <Link className="brand_logo" to="/"/>
+          <a className="brand_text" href="*">
               <span className='brand_title'>Бревна и точка</span>
               <span className='brand_subtitle'>Надежней уже некуда</span>
           </a>
@@ -16,17 +24,26 @@ export default function Header() {
           </form>
 
           <div className="nav_active">
-            <button className="btn btn_outline" type="button">
-               👤Профиль
-            </button>
+            <Link className="btn btn_outline" type="button" to="/Profils">
+               <FaRegUser/> Профиль
+            </Link>
 
-            <button className="btn btn_squre" type="button">
-              🧺
-            </button>
+            <Link className="btn btn_squre" type="button" to="/ShoppingCards">
+              <FaShoppingCart/>
+            </Link>
 
           </div>
+          
       </div>
       <hr/>
+
+      <Routes>
+        <Route path="/" element={<HomePages/>}/>
+        <Route path="/Profils" element={<Profil/>}/>
+        <Route path="/ShoppingCards" element={<ShoppingCard/>}/>
+        <Route path="*" element={<NonPages404/>}/>
+      </Routes>
+
     </header>
   )
 }

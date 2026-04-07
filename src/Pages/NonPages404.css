@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+*{
+    margin:  0;
+    padding: 0;
+}
+
+.BLOCK{
+    width: 851px;
+    height: 346px;
+    margin-top: 202px;
+    margin-left: 256px;
+    margin-bottom: 285px;
+    background-color: #f1f1f1;
+}
+
+.blockvblocke{
+    padding-top: 66px;
+    padding-right: 66px;
+    padding-bottom: 66px;
+    width: 445px;
+    height: 214px;
+}
+
+.supertit{
+    font-weight: 800;
+    font-size: 40px;
+    letter-spacing: .2px;
+}
+
+.subtit{
+    margin-top: 3px;
+    font-size: 20px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.allbtn{
+    margin-top: 45px;
+}
+
+.img404{
+    background: url(/src/img/img404.svg);
+    width: 340px;
+    height: 346;
+}

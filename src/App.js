@@ -1,15 +1,15 @@
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Home from "./components/Home";
-
+import { BrowserRouter } from 'react-router-dom';
 
 function App() {
   return (
-    <div className="wrapper">
-      <Header/>
-      <Home/>
-      <Footer/>
-    </div>
+    <BrowserRouter>
+      <div className="wrapper">
+        <Header/>
+        <Footer/>
+      </div>
+    </BrowserRouter>
   );
 }
 
