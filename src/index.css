@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+*{
+    margin:  0;
+    padding: 0;
+}
+
+body{
+    background-color: #165536;
+    color: #222;
+    font-family: "Nunito", sans-serif;
+    font-weight: 300;
+}
+
+.wrapper{
+    background-color: #fff;
+    border-radius: 30px;
+    width: 1380px;
+    margin: 31px auto;
+}
+
+header .nav{
+    max-width: 1252px;
+    display: flex;
+    margin: auto;
+    padding-top: 44px;
+    padding-left: 62px;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+
+}
+
+header .brand_text{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+header .brand_title{
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: .2px;
+}
+
+header .brand_subtitle{
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+header .brand_logo{
+    background: url(./img/logo.svg);
+    width: 45px;
+    height: 45px;
+}
+
+
+header .search{
+    flex: 1 1 auto;
+    height: 50px;
+    background: #f4f4f4;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    max-width: 764px;
+}
+
+header .search_input{
+    border: 0;
+    outline: 0;
+    background: transparent;
+    width: 100%;
+    font-size: 15px;
+    color: #000;
+}
+
+header .navactive{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+header .btn{
+    height: 44px;
+    border-radius: 14px;
+    border: 1.6px solid transparent;
+    background: #fff;
+    padding: 0 16px;
+    font-size: 15px;
+    font-weight: 6000;
+    color: #165536;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    
+     
+}
+
+header .btn_outline{
+    border-color: var(--stoke);
+    border-radius: 999px;
+    padding: 0 18px;
+
+}
+
+
+header .btn_squre{
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+    border-color: var(--stoke);
+    border-radius: 12px;
+    margin-left: 12px;
+
+}
+
+header hr{
+    margin-top: 42px;
+    max-height: 1px;
+}
+
+.Home .icon_add{
+    display: flex;
+    width: 1196px;
+    height: 244px;
+    background: url(./img/addblock.svg);
+}
+
+
+footer{
+    background-color: #21282B;
+    color: #fff;
+    border-radius: 0 0 30px 30px;
+    height: 240px;
+}
+
+footer .footer{
+    max-width: 1252px;
+    display: flex;
+    margin: auto;
+    padding-top: 34px;
+    padding-left: 67px;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+footer .block1{
+    max-width: 423px;
+    max-height: 110px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    margin-top: 24px;
+    font-size: 24px;
+}
+
+footer .block3{
+    max-width: 423px;
+    max-height: 110px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    margin-top: 24px;
+    font-size: 24px;
+    margin-left: 142px;
+}
+
+
+footer .super1{
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: .2px;
+
+}
+
+footer .super3{
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: .2px;
+    margin-left: 142px;
+
+}
+
+footer .MAX{
+    background: url(./img/MAX.svg);
+    width: 223px;
+    height: 58px;
+    border-radius: 20px;
+    margin-left: 34px;
+}
+
+footer .VK{
+    background: url(./img/VK.svg);
+    width: 223px;
+    height: 58px;
+    border-radius: 20px;
+    margin-top: 20px;
+    margin-left: 34px;
+}
+
+/*Хуйня без которой что то не работает нихуя*/
+footer button{
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+}
