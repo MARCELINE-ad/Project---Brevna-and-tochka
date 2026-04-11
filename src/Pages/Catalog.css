@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+*{
+    margin:  0;
+    padding: 0;
+}
+
+.wrappercat{
+    width: 1253px;
+    margin-top: 42px;
+    margin-left: 56px;
+}
+
+.allproduct{
+    font-weight: 800;
+    font-size: 36px;
+    letter-spacing: .2px;
+}
+
+.topbars{
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 64px;
+    
+}
+
+
+
+.categories {
+    width: 849px;
+    height: 55px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    background-color: #DEDEDE;
+    justify-content: space-evenly;
+    border-radius: 15px;
+}
+
+
+.product{
+    
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #5a6874;
+    cursor: pointer;
+    border-radius: 40px;
+    transition: all 0.2s ease;
+}
+
+
+.product:hover {
+    background-color: #ffff;
+    color: #165536;
+}
+
+.sorting {
+    width: 243px;
+    height: 55px;
+    background-color: #DEDEDE;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: auto;
+    border-radius: 15px;
+    
+    
+}
+
+.sort{
+    width: 243px;
+    height: 55px;
+    padding: 8px 16px;
+    border-radius: 15px; 
+    display: inline-block;
+    margin-left: auto;
+    background-color: #DEDEDE
+    
+}

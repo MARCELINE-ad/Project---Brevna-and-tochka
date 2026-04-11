@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import './NonPages404.css';
-
+import img404 from '../img/img404.svg';
 
 
 export default class NonPages404 extends Component {
@@ -22,8 +22,7 @@ export default class NonPages404 extends Component {
             </div>
 
         </div>
-
-        
+          <img src={img404} alt="Иллюстрация ошибки 404" />
         <div>
             
         </div>

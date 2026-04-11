@@ -7,16 +7,17 @@ import Profil from "../Pages/Profil";
 import ShoppingCard from "../Pages/ShoppingCard";
 import NonPages404 from "../Pages/NonPages404";
 import HomePages from "../Pages/HomePages";
+import Catalog from "../Pages/Catalog";
 
 export default function Header() {
   return (
     <header>
       <div className="nav">
           <Link className="brand_logo" to="/"/>
-          <a className="brand_text" href="*">
+          <Link className="brand_text" to="catalog">
               <span className='brand_title'>Бревна и точка</span>
               <span className='brand_subtitle'>Надежней уже некуда</span>
-          </a>
+          </Link>
 
           <form className="search"  role="search">
             <span className="search_icon"></span>
@@ -38,6 +39,7 @@ export default function Header() {
       <hr/>
 
       <Routes>
+        <Route path="/catalog" element={<Catalog/>}/>
         <Route path="/" element={<HomePages/>}/>
         <Route path="/Profils" element={<Profil/>}/>
         <Route path="/ShoppingCards" element={<ShoppingCard/>}/>
