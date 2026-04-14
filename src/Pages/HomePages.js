@@ -3,9 +3,9 @@ import Slider from 'react-slick'
 import 'slick-carousel/slick/slick.css'
 import 'slick-carousel/slick/slick-theme.css'
 
-import addblock from '../img/addblock.svg'
-import addblock2 from '../img/addblock2.svg'
-import addblock3 from '../img/addblock3.svg'
+import addblock from '../img/addblock.PNG'
+import addblock2 from '../img/addblock2.PNG'
+import addblock3 from '../img/addblock3.PNG'
 import Arrow from '../img/Arrow.png'
 
   const PrevArrow = ({ onClick }) => (
