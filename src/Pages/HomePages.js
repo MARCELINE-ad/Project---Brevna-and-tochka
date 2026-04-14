@@ -7,6 +7,10 @@ import addblock from '../img/addblock.PNG'
 import addblock2 from '../img/addblock2.PNG'
 import addblock3 from '../img/addblock3.PNG'
 import Arrow from '../img/Arrow.png'
+import BonusAd from '../img/BonusAd.png'
+import BonusWheel from '../img/BonusWheel.png'
+import CityRunner from '../img/CityRunner.png'
+import TowerBuilder from '../img/TowerBuilder.png'
 
   const PrevArrow = ({ onClick }) => (
     <button className="custom-prev" onClick={onClick}>
@@ -46,6 +50,26 @@ export default class HomePages extends Component {
         <img src={addblock3} alt="Banner 3" />
       </div>
     </Slider>
+
+        <div class="promo-grid">
+      <div className="BonusAd" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
+        <img src={BonusAd} alt="Bonus Ad" />
+      </div>
+
+      <div className="BonusWheel" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
+        <img src={BonusWheel} alt="Bonus Wheel" />
+      </div>
+
+      <div className="CityRunner" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
+        <img src={CityRunner} alt="City Runner" />
+      </div>
+
+      <div className="TowerBuilder" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
+        <img src={TowerBuilder} alt="Tower Builder" />
+      </div>
+      
+    </div>
+    
   </div>
 )
   }
