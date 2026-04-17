@@ -81,3 +81,19 @@
     background-color: #DEDEDE
     
 }
+
+
+.fproduct{
+    width: 1253px;
+
+}
+
+.ffilter{
+    width: 266px;
+    height: 863px;
+    background-color: bisque;
+    border-radius: 20px;
+    
+    margin-bottom: 20px;
+
+}

@@ -1,12 +1,23 @@
 import React, { Component } from 'react'
 import './Catalog.css';
-import { LuArrowUpDown } from "react-icons/lu";
 import {Link } from "react-router-dom";
+import Dropdown from '../components/Dropdown/Dropdown';
+import DropdownFilter from '../components/Dropdown/DropdownFilter';
+
+
+const moreItems = [
+    { label: 'Электрика', Link: '/electrica' },
+    { label: 'Сантехника', Link: '/santechnika' },
+    { label: 'Обои', Link: '/oboi' },
+    { label: 'Краски', Link: '/kraski' },
+    { label: 'Инструменты', Link: '/instrumenty' }
+  ];
 
 export default class Catalog extends Component {
   render() {
     return (
       <>
+        
         <div className='wrappercat'>
             <div className='allproduct'>Все товары</div>
 
@@ -18,20 +29,23 @@ export default class Catalog extends Component {
                     <Link to='' className='product'>Кровля</Link>
                     <Link to='' className='product'>Инструменты</Link>
                     <Link to='' className='product'>Стройматериалы</Link>
-                    <div>
-                      <div className=''>Ещё ▼ </div>
-                    </div>
+                    
+                    <Dropdown buttonText="Ещё" items={moreItems} />
                 </div>
 
                 <div className='sorting'>
                     <div>
-                        <LuArrowUpDown />Сортировка: рейтингу
+                        <DropdownFilter buttonText="Сортировка:" items={moreItems}/>
                     </div>
                 </div>
             </div>
 
-            <div className='всё вместе'>
-                <div className='фильтр'></div>
+
+
+            <div className='fproduct'>
+                <div className='ffilter'>
+                  <span>Фильтрация</span>
+                </div>
                 <div className='блоки товаров'></div>
             </div>
 
