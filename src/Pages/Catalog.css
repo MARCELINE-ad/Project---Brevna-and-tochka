@@ -85,6 +85,7 @@
 
 .fproduct{
     width: 1253px;
+    display: flex;
 
 }
 
@@ -93,7 +94,7 @@
     height: 863px;
     background-color: bisque;
     border-radius: 20px;
-    
+    margin-right: 32px;
     margin-bottom: 20px;
 
 }

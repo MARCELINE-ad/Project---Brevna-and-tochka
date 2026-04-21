@@ -302,3 +302,64 @@ footer .VK{
     margin-top: 20px;
     margin-left: 34px;
 }
+
+
+main{
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 50px;
+    justify-content: space-around;
+
+}
+
+main .item{
+    width: 285px;
+    height: 430px;
+    position: relative;
+    padding-bottom: 20px;
+    
+    
+}
+
+main .item img{
+    width: 100%;
+    transition: transform 500ms ease;
+
+}
+
+
+main .item img:hover{
+    transform: scale(1.05);
+    
+}
+
+main p{
+    margin-top: 3px;
+    font-size: 14px;
+    color: #B1B1B1;
+    font-weight: 500;
+}
+
+main b{
+    position: relative;
+    top: 29px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+main .add-to-card{
+    position: absolute;
+    right: 6px;
+    background: #dedede;
+    width: 150px;
+    height: 37px;
+    text-align: center;
+    font-weight: 650;
+    line-height: 35px;
+    color: #165536;
+    font-size: 15px;
+    border-radius: 15px;
+    cursor: pointer;
+
+}
