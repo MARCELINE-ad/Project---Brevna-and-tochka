@@ -18,6 +18,7 @@ export default class Catalog extends Component {
   constructor(props) {
     super(props)
     this.state = {
+      orders:[],
       items: [
         {
           id: 1,
@@ -69,6 +70,7 @@ export default class Catalog extends Component {
         },
       ]
     }
+    this.addToOrder = this.addToOrder.bind(this)
   }
 
 
@@ -105,7 +107,7 @@ export default class Catalog extends Component {
                   <span>Фильтрация</span>
                 </div>
 
-                <Items items= {this.state.items}/>
+                <Items items= {this.state.items} onAdd = {this.addToOrder}/>
 
             </div>
 
@@ -113,5 +115,9 @@ export default class Catalog extends Component {
         </div>
       </>
     )
+  }
+
+  addToOrder(item){
+    this.setState({orders: [...this.state.orders, item]})
   }
 }
