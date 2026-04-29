@@ -1,13 +1,8 @@
 import React from "react"
 import { FaShoppingCart } from "react-icons/fa";
 import { FaRegUser } from "react-icons/fa";
-import { Route, Routes, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import Profil from "../Pages/Profil";
-import ShoppingCard from "../Pages/ShoppingCard";
-import NonPages404 from "../Pages/NonPages404";
-import HomePages from "../Pages/HomePages";
-import Catalog from "../Pages/Catalog";
 
 export default function Header() {
   return (
@@ -38,13 +33,6 @@ export default function Header() {
       </div>
       <hr/>
 
-      <Routes>
-        <Route path="/catalog" element={<Catalog/>}/>
-        <Route path="/" element={<HomePages/>}/>
-        <Route path="/Profils" element={<Profil/>}/>
-        <Route path="/ShoppingCards" element={<ShoppingCard/>}/>
-        <Route path="*" element={<NonPages404/>}/>
-      </Routes>
 
     </header>
   )
