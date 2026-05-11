@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Брёвна и Точка — Гонка</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Nunito:wght@700;800;900&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Nunito', monospace;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#gameCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: default;
+}
+
+/* ── Wrap для оверлеев ── */
+#wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Общий экран ── */
+.scr {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 7%;
+}
+#scr-start { background: rgba(0,0,0,0.52); }
+#scr-over  { background: rgba(0,0,0,0.68); display: none; }
+
+/* ── Логотип ── */
+.scr-logo {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(2rem, 8vw, 3.4rem);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 4px;
+  text-shadow: 3px 3px 0 #8B3A00, 0 4px 18px rgba(0,0,0,0.6);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.scr-logo span { color: #F5A623; }
+
+.scr-sub {
+  font-size: clamp(0.75rem, 3vw, 1rem);
+  font-weight: 800;
+  color: rgba(255,255,255,0.8);
+  letter-spacing: 1px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* ── Кнопка старт ── */
+.playbtn {
+  background: linear-gradient(180deg, #F5A623 0%, #C85A00 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 14px 52px;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1rem, 4vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #8B3A00, 0 8px 20px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.3);
+  text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform .1s, box-shadow .1s;
+}
+.playbtn:active { transform: translateY(3px); box-shadow: 0 3px 0 #8B3A00, 0 5px 12px rgba(0,0,0,.4); }
+
+/* ── Кнопка «На сайт» ── */
+.backbtn {
+  background: linear-gradient(180deg, #4A90D9 0%, #2C5F8A 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 11px 34px;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(0.85rem, 3.2vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #1a3a58, 0 7px 16px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.25);
+  text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform .1s, box-shadow .1s;
+  margin-top: 10px;
+  text-decoration: none;
+  display: inline-block;
+}
+.backbtn:active { transform: translateY(3px); box-shadow: 0 2px 0 #1a3a58, 0 4px 10px rgba(0,0,0,.4); }
+
+/* ── Карточка счёта ── */
+.sbox {
+  background: #fff;
+  border: 4px solid #C85A00;
+  border-radius: 10px;
+  padding: 10px 40px;
+  margin-bottom: 10px;
+  text-align: center;
+  box-shadow: 4px 4px 0 #C85A00;
+}
+.sbox .big {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(2rem, 7vw, 2.8rem);
+  font-weight: 700;
+  color: #C85A00;
+  line-height: 1;
+}
+.sbox .lbl {
+  font-size: .6rem;
+  font-weight: 800;
+  color: #999;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.sbox-best {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  font-weight: 700;
+  color: #F5A623;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+  min-height: 1.5em;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.3);
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Стартовый экран -->
+  <div class="scr" id="scr-start">
+    <div class="scr-logo">CITY<br><span>RUNNER</span></div>
+    <div class="scr-sub">🚛 ДОСТАВЬ БРЁВНА — ПРОЕДЬ 500 М!</div>
+    <button class="playbtn" id="btn-start">ПОЕХАЛИ!</button>
+    <a class="backbtn" href="javascript:history.back()">🏠 НА САЙТ</a>
+  </div>
+
+  <!-- Экран game over -->
+  <div class="scr" id="scr-over">
+    <div class="scr-logo" style="margin-bottom:12px">КОНЕЦ<br><span>ИГРЫ</span></div>
+    <div class="sbox">
+      <div class="big" id="ov-score">0</div>
+      <div class="lbl">метров</div>
+    </div>
+    <div class="sbox-best" id="ov-best"></div>
+    <button class="playbtn" id="btn-retry">ЕЩЁ РАЗ!</button>
+    <a class="backbtn" href="/">🏠 НА САЙТ</a>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+function resize() {
+  const maxH = window.innerHeight, maxW = window.innerWidth;
+  const ratio = 9 / 16;
+  let h = maxH, w = h * ratio;
+  if (w > maxW) { w = maxW; h = w / ratio; }
+  canvas.width  = Math.floor(w);
+  canvas.height = Math.floor(h);
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  // Sync wrap to canvas size so overlays fit exactly
+  const wrap = document.getElementById('wrap');
+  wrap.style.width  = w + 'px';
+  wrap.style.height = h + 'px';
+  initLayout();
+}
+
+let W, H, ROAD_LEFT, ROAD_RIGHT, ROAD_W, LANE_W, SHOULDER_W;
+let LANE_CENTERS = [];
+
+function initLayout() {
+  W = canvas.width; H = canvas.height;
+  SHOULDER_W  = Math.floor(W * 0.13);
+  ROAD_LEFT   = SHOULDER_W;
+  ROADRIGHT   = W - SHOULDER_W;
+  ROAD_W      = ROADRIGHT - ROAD_LEFT;
+  LANE_W      = ROAD_W / 3;
+  LANE_CENTERS = [
+    ROAD_LEFT + LANE_W * 0.5,
+    ROAD_LEFT + LANE_W * 1.5,
+    ROAD_LEFT + LANE_W * 2.5,
+  ];
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = 'start';
+let score = 0;
+let record = parseInt(localStorage.getItem('brevna_record') || '0');
+let speed = 0, baseSpeed = 3.2, speedKmh = 0;
+const GOAL_METERS = 500;
+let bonusPoints = 0; // баллы за эту попытку
+let goalReached = false;
+let fuel = 1.0, fuelDrain = 0.00038;
+let frameCount = 0, soundOn = true;
+let roadOffset = 0;
+let obstacles = [], bonuses = [], trees = [], particles = [], toasts = [];
+
+// ─── PLAYER ──────────────────────────────────────────────────────────────────
+let player = {
+  lane: 1,
+  x: 0, y: 0, w: 0, h: 0,
+  renderX: 0,
+  targetX: 0,
+  velX: 0,
+  sway: 0,
+  swayAngle: 0,
+  tiltAngle: 0,
+  trailerTiltAngle: 0,
+  impactShake: 0,
+};
+let keys = {}, laneChangeCooldown = 0;
+
+// ─── AUDIO ───────────────────────────────────────────────────────────────────
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playBeep(freq, dur, type, vol) {
+  if (!soundOn) return;
+  type = type || 'square'; vol = vol || 0.15;
+  try {
+    const ac = getAudio(), osc = ac.createOscillator(), gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+    osc.start(); osc.stop(ac.currentTime + dur);
+  } catch(e) {}
+}
+function playCrash()  { playBeep(80, 0.5, 'sawtooth', 0.3); }
+function playPickup() { playBeep(880, 0.08, 'square', 0.2); playBeep(1320, 0.15, 'square', 0.15); }
+function playEngine() {
+  if (!soundOn) return;
+  try {
+    const ac = getAudio(), osc = ac.createOscillator(), gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = 'sawtooth'; osc.frequency.value = 60 + speed * 9;
+    gain.gain.setValueAtTime(0.04, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+    osc.start(); osc.stop(ac.currentTime + 0.08);
+  } catch(e) {}
+}
+
+// ─── PIXEL FONT ──────────────────────────────────────────────────────────────
+const PF = {
+  '0':[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+  '1':[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],
+  '2':[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],
+  '3':[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],
+  '4':[[1,0,1],[1,0,1],[1,1,1],[0,0,1],[0,0,1]],
+  '5':[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+  '6':[[1,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+  '7':[[1,1,1],[0,0,1],[0,1,1],[0,1,0],[0,1,0]],
+  '8':[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],
+  '9':[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,1]],
+  ' ':[[0,0],[0,0],[0,0],[0,0],[0,0]],
+  ':':[[0,0,0],[0,1,0],[0,0,0],[0,1,0],[0,0,0]],
+  '!':[[0,1,0],[0,1,0],[0,1,0],[0,0,0],[0,1,0]],
+  '.':[[0,0],[0,0],[0,0],[0,0],[0,1]],
+  ',':[[0,0],[0,0],[0,0],[0,1],[1,0]],
+  '-':[[0,0,0],[0,0,0],[1,1,1],[0,0,0],[0,0,0]],
+  '/':[[0,0,1],[0,0,1],[0,1,0],[1,0,0],[1,0,0]],
+  '+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],
+  'а':[[0,1,1,0],[1,0,0,1],[0,1,1,1],[1,0,0,1],[0,1,1,1]],
+  'б':[[1,1,1,1],[1,0,0,0],[1,1,1,0],[1,0,0,1],[1,1,1,0]],
+  'в':[[1,1,1,0],[1,0,0,1],[1,1,1,0],[1,0,0,1],[1,1,1,0]],
+  'г':[[1,1,1,1],[1,0,0,0],[1,0,0,0],[1,0,0,0],[1,0,0,0]],
+  'д':[[0,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1],[0,0,0,1]],
+  'е':[[0,1,1,0],[1,0,0,1],[1,1,1,1],[1,0,0,0],[0,1,1,1]],
+  'ё':[[1,0,0,1],[0,1,1,0],[1,0,0,1],[1,1,1,1],[0,1,1,1]],
+  'з':[[1,1,1,0],[0,0,0,1],[0,1,1,0],[0,0,0,1],[1,1,1,0]],
+  'и':[[1,0,0,1],[1,1,0,1],[1,0,1,1],[1,0,0,1],[1,0,0,1]],
+  'й':[[0,1,0,1],[1,0,0,1],[1,1,0,1],[1,0,1,1],[1,0,0,1]],
+  'к':[[1,0,0,1],[1,0,1,0],[1,1,0,0],[1,0,1,0],[1,0,0,1]],
+  'л':[[0,1,1,1],[1,0,0,1],[1,0,0,1],[1,0,0,1],[1,0,0,1]],
+  'м':[[1,0,0,1],[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,0,0,1]],
+  'н':[[1,0,0,1],[1,0,0,1],[1,1,1,1],[1,0,0,1],[1,0,0,1]],
+  'о':[[0,1,1,0],[1,0,0,1],[1,0,0,1],[1,0,0,1],[0,1,1,0]],
+  'п':[[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,0,0,1],[1,0,0,1]],
+  'р':[[1,1,1,0],[1,0,0,1],[1,1,1,0],[1,0,0,0],[1,0,0,0]],
+  'с':[[0,1,1,0],[1,0,0,1],[1,0,0,0],[1,0,0,1],[0,1,1,0]],
+  'т':[[1,1,1,1],[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]],
+  'у':[[1,0,0,1],[1,0,0,1],[0,1,1,1],[0,0,0,1],[1,1,1,0]],
+  'х':[[1,0,0,1],[0,1,1,0],[0,0,0,0],[0,1,1,0],[1,0,0,1]],
+  'ч':[[1,0,0,1],[1,0,0,1],[0,1,1,1],[0,0,0,1],[0,0,0,1]],
+  'ш':[[1,0,1,0,1],[1,0,1,0,1],[1,0,1,0,1],[1,0,1,0,1],[1,1,1,1,1]],
+  'ь':[[1,0,0,0],[1,0,0,0],[1,1,1,0],[1,0,0,1],[1,1,1,0]],
+  'э':[[0,1,1,0],[1,0,0,1],[0,1,1,1],[1,0,0,1],[0,1,1,0]],
+  'я':[[0,1,1,1],[1,0,0,1],[0,1,1,1],[0,0,1,1],[1,0,0,1]],
+  'щ':[[1,0,1,0,1],[1,0,1,0,1],[1,0,1,0,1],[1,1,1,1,1],[0,0,0,0,1]],
+  'ю':[[1,0,1,1,0],[1,0,1,0,1],[1,1,1,0,1],[1,0,1,0,1],[1,0,1,1,0]],
+};
+
+// scale — логическая единица; реальный размер = vmin * scale * 0.035
+function _textFs(scale) {
+  const vmin = Math.min(W, H);
+  return Math.max(11, Math.round(vmin * 0.038 * scale));
+}
+function drawPixelText(text, x, y, scale, color) {
+  const fs = _textFs(scale);
+  ctx.save();
+  ctx.font = 'bold ' + fs + 'px "Segoe UI",Arial,sans-serif';
+  ctx.fillStyle = color || '#ffffff';
+  ctx.textBaseline = 'top';
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+function pxW(text, scale) {
+  const fs = _textFs(scale);
+  ctx.save();
+  ctx.font = 'bold ' + fs + 'px "Segoe UI",Arial,sans-serif';
+  const w = ctx.measureText(text).width;
+  ctx.restore();
+  return w;
+}
+
+// ─── DRAWING HELPERS ─────────────────────────────────────────────────────────
+function rRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);   ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);     ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+  if (fill)   { ctx.fillStyle=fill;   ctx.fill(); }
+  if (stroke) { ctx.strokeStyle=stroke; ctx.stroke(); }
+}
+
+// ─── SPRITES ─────────────────────────────────────────────────────────────────
+function drawTruck(cabX, trailerX, cy, s, cabAngle, trailerAngle) {
+  const cx = (cabX + trailerX) * 0.5;
+  const angle = cabAngle || 0;
+
+  const cabH  = s * 2.6;
+  const boxH  = s * 5.0;
+  const bodyW = s * 2.9;
+  const totalH = cabH + boxH;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+
+  // Машина едет ВВЕРХ: перед (кабина с фарами) = TOP экрана = отрицательный Y
+  // cabFront = верхний край кабины (передний бампер, фары)
+  const cabFront = -totalH * 0.5;          // передний бампер вверху
+  const cabBack  = cabFront + cabH;         // граница кабина/кузов
+  const boxBack  = cabBack + boxH;          // задний борт кузова (внизу)
+
+  // ── Колёса ──
+  ctx.fillStyle = '#1a1a1a';
+  // Передние (вверху — у кабины)
+  ctx.fillRect(-bodyW*0.5 - s*0.36, cabFront + s*0.8, s*0.36, s*0.9);
+  ctx.fillRect( bodyW*0.5 + s*0.00, cabFront + s*0.8, s*0.36, s*0.9);
+  // Задние двойные (внизу — у кузова)
+  ctx.fillRect(-bodyW*0.5 - s*0.40, cabBack + boxH - s*1.9, s*0.38, s*0.85);
+  ctx.fillRect(-bodyW*0.5 - s*0.40, cabBack + boxH - s*1.05, s*0.38, s*0.85);
+  ctx.fillRect( bodyW*0.5 + s*0.02, cabBack + boxH - s*1.9, s*0.38, s*0.85);
+  ctx.fillRect( bodyW*0.5 + s*0.02, cabBack + boxH - s*1.05, s*0.38, s*0.85);
+
+  // ── Кабина (вверху = ПЕРЕД) ──
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(-bodyW*0.5 + s*0.05, cabFront, bodyW - s*0.1, cabH);
+
+  // Фары (самый верх = передний бампер)
+  ctx.fillStyle = '#ffe87a';
+  ctx.fillRect(-bodyW*0.5, cabFront, s*0.52, s*0.36);
+  ctx.fillRect( bodyW*0.5 - s*0.52, cabFront, s*0.52, s*0.36);
+
+  // Решётка радиатора
+  ctx.fillStyle = '#333';
+  ctx.fillRect(-bodyW*0.5 + s*0.1, cabFront + s*0.4, bodyW - s*0.2, s*0.52);
+  for (let i = 0; i < 4; i++) {
+    ctx.fillStyle = '#555';
+    ctx.fillRect(-bodyW*0.5 + s*0.18 + i*s*0.5, cabFront + s*0.44, s*0.32, s*0.44);
+  }
+
+  // Бампер
+  ctx.fillStyle = '#999';
+  ctx.fillRect(-bodyW*0.5 + s*0.06, cabFront + s*0.0, bodyW - s*0.12, s*0.22);
+
+  // Лобовое стекло
+  ctx.fillStyle = '#b8d9f5';
+  ctx.fillRect(-bodyW*0.5 + s*0.22, cabFront + s*1.0, bodyW - s*0.44, s*1.28);
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.fillRect(-bodyW*0.5 + s*0.3, cabFront + s*1.06, s*0.62, s*0.5);
+
+  // Дворник
+  ctx.strokeStyle = '#333'; ctx.lineWidth = Math.max(1, s*0.09);
+  ctx.beginPath();
+  ctx.moveTo(-s*0.5, cabFront + s*2.1);
+  ctx.lineTo(s*0.1, cabFront + s*1.1);
+  ctx.stroke();
+
+  // Зеркала
+  ctx.fillStyle = '#992222';
+  ctx.fillRect(-bodyW*0.5 - s*0.3, cabFront + s*1.0, s*0.3, s*0.22);
+  ctx.fillRect( bodyW*0.5 + s*0.0, cabFront + s*1.0, s*0.3, s*0.22);
+
+  // Разделитель кабина/кузов
+  ctx.fillStyle = '#444';
+  ctx.fillRect(-bodyW*0.5, cabBack - s*0.15, bodyW, s*0.22);
+
+  // ── Кузов с брёвнами (внизу = ЗАД) ──
+  ctx.fillStyle = '#8B7355';
+  ctx.fillRect(-bodyW*0.5, cabBack, bodyW, boxH);
+  ctx.strokeStyle = '#6b5535'; ctx.lineWidth = Math.max(1, s*0.13);
+  ctx.strokeRect(-bodyW*0.5, cabBack, bodyW, boxH);
+
+  // Брёвна
+  const logColors = ['#8B4513','#A0522D','#7A3B10'];
+  const lW = s*0.75, lH = boxH - s*0.55;
+  const lXs = [-bodyW*0.5+s*0.08, -bodyW*0.5+s*0.88, -bodyW*0.5+s*1.68];
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = logColors[i];
+    ctx.fillRect(lXs[i], cabBack + s*0.25, lW, lH);
+    // Торцы брёвен снизу (зад)
+    ctx.fillStyle = logColors[(i+1)%3];
+    ctx.beginPath();
+    ctx.ellipse(lXs[i]+lW/2, cabBack+lH+s*0.1, lW/2-s*0.04, s*0.38, 0,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#5a2c0a'; ctx.lineWidth = Math.max(1, s*0.07);
+    ctx.beginPath();
+    ctx.ellipse(lXs[i]+lW/2, cabBack+lH+s*0.1, lW*0.28, s*0.22, 0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.fillStyle = '#3a1a05';
+    ctx.beginPath();
+    ctx.ellipse(lXs[i]+lW/2, cabBack+lH+s*0.1, s*0.08, s*0.08, 0,0,Math.PI*2);
+    ctx.fill();
+    // Продольные линии
+    ctx.strokeStyle = '#5a2c0a'; ctx.lineWidth = Math.max(1, s*0.06);
+    for (let g = 1; g < 3; g++) {
+      const lx = lXs[i] + lW*g*0.35;
+      ctx.beginPath(); ctx.moveTo(lx, cabBack+s*0.4); ctx.lineTo(lx, cabBack+lH); ctx.stroke();
+    }
+  }
+
+  // Стяжные ремни
+  ctx.fillStyle = '#f5c842';
+  ctx.fillRect(-bodyW*0.5, cabBack + boxH*0.3, bodyW, s*0.16);
+  ctx.fillRect(-bodyW*0.5, cabBack + boxH*0.65, bodyW, s*0.16);
+
+  // Задний борт (самый низ)
+  ctx.fillStyle = '#7a6345';
+  ctx.fillRect(-bodyW*0.5, boxBack - s*0.28, bodyW, s*0.28);
+  ctx.strokeStyle = '#5a4530'; ctx.lineWidth = Math.max(1, s*0.1);
+  ctx.strokeRect(-bodyW*0.5, boxBack - s*0.28, bodyW, s*0.28);
+  // Задние фонари
+  ctx.fillStyle = '#ff3333';
+  ctx.fillRect(-bodyW*0.5, boxBack - s*0.28, s*0.4, s*0.28);
+  ctx.fillRect( bodyW*0.5 - s*0.4, boxBack - s*0.28, s*0.4, s*0.28);
+
+  ctx.restore();
+}
+
+function drawGreenSedan(cx, cy, s) {
+  ctx.fillStyle='#4a8c3f'; ctx.fillRect(cx-s*1.1, cy-s*2.8, s*2.2, s*4.8);
+  ctx.fillStyle='#3a7030'; ctx.fillRect(cx-s*0.9, cy-s*2.5, s*1.8, s*2.2);
+  ctx.fillStyle='#c5e8f5'; ctx.fillRect(cx-s*0.75, cy-s*2.3, s*1.5, s*1.0);
+  ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fillRect(cx-s*0.65, cy-s*2.2, s*0.5, s*0.35);
+  ctx.fillStyle='#c5e8f5'; ctx.fillRect(cx-s*0.7, cy-s*0.3, s*1.4, s*0.7);
+  ctx.fillStyle='#ffe87a';
+  ctx.fillRect(cx-s*1.0, cy-s*2.75, s*0.4, s*0.25);
+  ctx.fillRect(cx+s*0.6, cy-s*2.75, s*0.4, s*0.25);
+  ctx.fillStyle='#ff4444';
+  ctx.fillRect(cx-s*1.0, cy+s*1.9, s*0.4, s*0.2);
+  ctx.fillRect(cx+s*0.6, cy+s*1.9, s*0.4, s*0.2);
+  ctx.fillStyle='#222';
+  ctx.fillRect(cx-s*1.35, cy-s*2.2, s*0.35, s*0.7);
+  ctx.fillRect(cx+s*1.0,  cy-s*2.2, s*0.35, s*0.7);
+  ctx.fillRect(cx-s*1.35, cy+s*0.9, s*0.35, s*0.7);
+  ctx.fillRect(cx+s*1.0,  cy+s*0.9, s*0.35, s*0.7);
+  ctx.fillStyle='#5aaa4f'; ctx.fillRect(cx-s*0.3, cy-s*2.8, s*0.6, s*0.5);
+}
+
+function drawOrangeTruck(cx, cy, s) {
+  ctx.fillStyle='#d4853a'; ctx.fillRect(cx-s*1.2, cy-s*3.0, s*2.4, s*5.0);
+  ctx.fillStyle='#c07030'; ctx.fillRect(cx-s*1.0, cy-s*3.0, s*2.0, s*1.8);
+  ctx.fillStyle='#c5e8f5'; ctx.fillRect(cx-s*0.8, cy-s*2.8, s*1.6, s*1.1);
+  ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fillRect(cx-s*0.7, cy-s*2.7, s*0.55, s*0.4);
+  ctx.fillStyle='#b06020'; ctx.fillRect(cx-s*1.0, cy-s*0.9, s*2.0, s*2.5);
+  ctx.fillStyle='#c87838'; ctx.fillRect(cx-s*0.9, cy-s*0.7, s*1.8, s*2.0);
+  ctx.fillStyle='#ffe87a';
+  ctx.fillRect(cx-s*1.1, cy-s*3.0, s*0.45, s*0.25);
+  ctx.fillRect(cx+s*0.65,cy-s*3.0, s*0.45, s*0.25);
+  ctx.fillStyle='#ff4444';
+  ctx.fillRect(cx-s*1.1, cy+s*1.85, s*0.45, s*0.2);
+  ctx.fillRect(cx+s*0.65,cy+s*1.85, s*0.45, s*0.2);
+  ctx.fillStyle='#222';
+  ctx.fillRect(cx-s*1.45, cy-s*2.3, s*0.38, s*0.8);
+  ctx.fillRect(cx+s*1.07, cy-s*2.3, s*0.38, s*0.8);
+  ctx.fillRect(cx-s*1.45, cy+s*0.7, s*0.38, s*0.8);
+  ctx.fillRect(cx+s*1.07, cy+s*0.7, s*0.38, s*0.8);
+}
+
+function drawFuelCan(cx, cy, s) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  // Тень
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.fillRect(-s*0.8+s*0.12, -s*0.9+s*0.12, s*1.6, s*1.9);
+  // Основной корпус — жёлтый
+  ctx.fillStyle='#f5c800';
+  ctx.fillRect(-s*0.8, -s*0.9, s*1.6, s*1.9);
+  // Боковой блик
+  ctx.fillStyle='#ffe94d';
+  ctx.fillRect(-s*0.62, -s*0.78, s*0.38, s*1.65);
+  // Нижняя тень
+  ctx.fillStyle='#c9a200';
+  ctx.fillRect(-s*0.8, s*0.65, s*1.6, s*0.35);
+  // Горизонтальные рёбра жёсткости
+  ctx.fillStyle='#c9a200';
+  ctx.fillRect(-s*0.8, -s*0.15, s*1.6, s*0.14);
+  ctx.fillRect(-s*0.8,  s*0.28, s*1.6, s*0.14);
+  // Ручка сверху
+  ctx.fillStyle='#aaa820';
+  ctx.fillRect(-s*0.18, -s*1.18, s*0.36, s*0.32);
+  // Горлышко / крышка
+  ctx.fillStyle='#888';
+  ctx.fillRect(s*0.28, -s*1.22, s*0.28, s*0.42);
+  ctx.fillStyle='#555';
+  ctx.fillRect(s*0.26, -s*1.24, s*0.32, s*0.14);
+  // Значок бензина (молния)
+  ctx.fillStyle='#c9a200';
+  ctx.beginPath();
+  ctx.moveTo( s*0.1,  -s*0.62);
+  ctx.lineTo(-s*0.05, -s*0.08);
+  ctx.lineTo( s*0.08, -s*0.08);
+  ctx.lineTo(-s*0.1,   s*0.48);
+  ctx.lineTo( s*0.22,  -s*0.22);
+  ctx.lineTo( s*0.06,  -s*0.22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawTree(cx, cy, s, v) {
+  if (v===0) {
+    ctx.fillStyle='#2d6e2d'; ctx.fillRect(cx-s*1.2, cy-s*1.8, s*2.4, s*2.2);
+    ctx.fillStyle='#3a8c3a'; ctx.fillRect(cx-s*0.9, cy-s*2.3, s*1.8, s*0.7);
+    ctx.fillStyle='#4aaa4a'; ctx.fillRect(cx-s*0.5, cy-s*1.5, s*1.0, s*0.6);
+    ctx.fillStyle='#6b4226'; ctx.fillRect(cx-s*0.25, cy+s*0.4, s*0.5, s*0.5);
+  } else if (v===1) {
+    ctx.fillStyle='#6b4226'; ctx.fillRect(cx-s*0.2, cy-s*0.5, s*0.4, s*1.2);
+    ctx.fillStyle='#c46b1e'; ctx.fillRect(cx-s*1.0, cy-s*2.8, s*2.0, s*2.5);
+    ctx.fillStyle='#e08020'; ctx.fillRect(cx-s*0.7, cy-s*3.3, s*1.4, s*0.8);
+    ctx.fillStyle='#d4550e'; ctx.fillRect(cx-s*0.4, cy-s*1.5, s*0.8, s*0.5);
+  } else {
+    ctx.fillStyle='#6b4226'; ctx.fillRect(cx-s*0.2, cy-s*0.5, s*0.4, s*1.2);
+    ctx.fillStyle='#8c3a1e'; ctx.fillRect(cx-s*0.9, cy-s*2.6, s*1.8, s*2.2);
+    ctx.fillStyle='#aa4a2a'; ctx.fillRect(cx-s*0.6, cy-s*3.0, s*1.2, s*0.7);
+    ctx.fillStyle='#cc5522'; ctx.fillRect(cx-s*0.35, cy-s*1.4, s*0.7, s*0.4);
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function initGame() {
+  resize();
+  speed = baseSpeed; score = 0; fuel = 1.0; frameCount = 0;
+  obstacles = []; bonuses = []; particles = []; toasts = []; roadOffset = 0;
+  laneChangeCooldown = 0;
+  player.w = Math.floor(LANE_W * 0.58);
+  player.h = Math.floor(player.w * 3.2);
+  player.lane = 1;
+  player.x = player.targetX = player.renderX = LANE_CENTERS[1];
+  player.velX = player.sway = player.swayAngle = player.tiltAngle = player.trailerTiltAngle = player.impactShake = 0;
+  player.cabX = player.trailerX = LANE_CENTERS[player.lane];
+  player.cabVelX = player.trailerVelX = 0;
+  player.cabRenderX = player.trailerRenderX = player.cabX;
+  player.y = H * 0.78;
+  goalReached = false; bonusPoints = 0;
+  trees = [];
+  for (let i=0;i<22;i++) spawnTree(Math.random()*H);
+}
+
+function spawnTree(y) {
+  const s = Math.floor(W*0.028) + Math.floor(Math.random()*W*0.018);
+  const isNew = y===undefined;
+  trees.push(
+    {x: ROAD_LEFT*0.5+(Math.random()-0.5)*ROAD_LEFT*0.8,          y: isNew ? -s*4 : y, s, variant: (Math.random()*3)|0},
+    {x: ROADRIGHT+SHOULDER_W*0.5+(Math.random()-0.5)*SHOULDER_W*0.8, y: isNew ? -s*4 : y, s, variant: (Math.random()*3)|0}
+  );
+}
+
+// Возвращает полосы, заблокированные в диапазоне Y [yMin, yMax]
+function getLanesBlockedInRange(yMin, yMax) {
+  const blocked = new Set();
+  for (const o of obstacles) {
+    if (o.y + player.h * 0.6 > yMin && o.y - player.h * 0.6 < yMax) {
+      blocked.add(o.lane);
+    }
+  }
+  return blocked;
+}
+
+// Проверяет, есть ли безопасный коридор из текущей позиции игрока вперёд
+// Сканирует зону перед игроком и проверяет, существует ли хотя бы одна
+// полоса, свободная на достаточном протяжении чтобы успеть перестроиться
+function getEscapeRoutes() {
+  const lookAhead = player.h * 5;   // смотрим на 5 корпусов вперёд
+  const playerY   = player.y;
+  const scanTop   = playerY - lookAhead;
+  const scanBot   = playerY - player.h * 0.8;
+
+  // Разбиваем зону на 3 горизонтальных слоя и проверяем каждый
+  const slices = 3;
+  const sliceH = (scanBot - scanTop) / slices;
+  const safe = new Set([0, 1, 2]);
+
+  for (let si = 0; si < slices; si++) {
+    const sTop = scanTop + si * sliceH;
+    const sBot = sTop + sliceH;
+    const blocked = getLanesBlockedInRange(sTop, sBot);
+    // Полоса безопасна только если она свободна во ВСЕХ слоях
+    for (const l of blocked) safe.delete(l);
+  }
+  return safe; // полосы, в которые можно безопасно выехать
+}
+
+function spawnObstacle() {
+  const s = Math.floor(LANE_W * 0.18);
+  const spawnY = -player.h * 1.2;
+
+  // Полосы уже занятые у зоны спавна
+  const nearBlocked = getLanesBlockedInRange(spawnY - player.h * 2, spawnY + player.h);
+
+  // Полосы, свободные у спавна — кандидаты
+  let candidates = [0, 1, 2].filter(l => !nearBlocked.has(l));
+  if (candidates.length === 0) return; // дорога забита у спавна
+
+  // Текущие безопасные маршруты для игрока
+  const escapeNow = getEscapeRoutes();
+
+  // Фильтруем кандидатов: не закрываем последний путь к спасению
+  // Симулируем: если мы заспавним машину на lane X, останется ли выход?
+  const safe = candidates.filter(lane => {
+    // После спавна на этой полосе, сколько маршрутов останется?
+    // Считаем escape routes без учёта этого спавна, но убирая эту полосу
+    const remainingEscape = new Set(escapeNow);
+    remainingEscape.delete(lane);
+    // Разрешаем если останется хотя бы 1 маршрут, ИЛИ если сейчас маршрутов нет вообще
+    return remainingEscape.size > 0 || escapeNow.size === 0;
+  });
+
+  const pool = safe.length > 0 ? safe : candidates;
+  const lane = pool[(Math.random() * pool.length) | 0];
+
+  // Вариативность скоростей
+  const speedVariant = Math.random();
+  let carSpeed;
+  if (speedVariant < 0.25) {
+    carSpeed = speed * 0.06;
+  } else if (speedVariant < 0.65) {
+    carSpeed = speed * 0.16;
+  } else {
+    carSpeed = speed * 0.26;
+  }
+
+  const laneWobble = (Math.random() - 0.5) * LANE_W * 0.1;
+
+  obstacles.push({
+    lane,
+    x: LANE_CENTERS[lane] + laneWobble,
+    y: spawnY,
+    s,
+    type: Math.random() < 0.55 ? 'sedan' : 'pickup',
+    speed: carSpeed,
+    laneWobble,
+    wobblePhase: Math.random() * Math.PI * 2,
+    wobbleAmp: Math.random() < 0.15 ? LANE_W * 0.05 : 0,
+  });
+}
+
+function spawnBonus() {
+  const lane = (Math.random()*3)|0, s = Math.floor(LANE_W*0.13);
+  bonuses.push({ x: LANE_CENTERS[lane], y: -s*2, s, lane });
+}
+
+function addToast(text, color) {
+  toasts.push({ text, color: color||'#ffcc44', life:1.0, x:W/2, y:player.y - player.h*0.6 });
+}
+
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+function update() {
+  if (state !== 'playing') return;
+  frameCount++;
+  speed    = baseSpeed + frameCount * 0.0002 + score * 0.0012;
+  speedKmh = Math.floor(speed * 18);
+  score   += speed * 0.06;
+  // Проверка достижения цели 500 м
+  if (!goalReached && Math.floor(score) >= GOAL_METERS) {
+    goalReached = true;
+    // Баллы: базовые 100 + бонус за топливо (до 80) + бонус за скорость (до 70)
+    const fuelBonus  = Math.floor(fuel * 80);
+    const speedBonus = Math.floor(Math.min(1, (speed - baseSpeed) / 4) * 70);
+    bonusPoints = 100 + fuelBonus + speedBonus;
+    addToast('🎉 +' + bonusPoints + ' баллов!', '#ffcc44');
+    // Сообщаем сайту о победе
+    try {
+      window.parent.postMessage({
+        type: 'BREVNA_GOAL_REACHED',
+        points: bonusPoints,
+        fuelBonus, speedBonus,
+        distance: Math.floor(score)
+      }, '*');
+    } catch(e) {}
+  }
+  fuel    -= fuelDrain * (1 + speed*0.02);
+  if (fuel <= 0) { fuel=0; triggerGameOver(); return; }
+  roadOffset = (roadOffset + speed*3.5) % 60;
+
+  // ── Управление: инерционный поворот как у грузовика ──
+
+  // ── Физика сочленения: кабина и прицеп на разных X ──
+  // Кабина тянется к целевой полосе быстро
+  const cabTarget = LANE_CENTERS[player.lane];
+  const cabDist = cabTarget - player.cabX;
+  player.cabVelX = player.cabVelX * 0.60 + cabDist * 0.28;
+  player.cabVelX *= 0.80;
+  player.cabX += player.cabVelX;
+
+  // Прицеп тянется за кабиной медленнее (инерция груза)
+  const trailerDist = player.cabX - player.trailerX;
+  player.trailerVelX = player.trailerVelX * 0.70 + trailerDist * 0.18;
+  player.trailerVelX *= 0.78;
+  player.trailerX += player.trailerVelX;
+
+  // Общая X позиция (для коллизий) — середина между кабиной и прицепом
+  player.x = (player.cabX + player.trailerX) * 0.5;
+
+  // Угол кабины — вычисляется из разницы X между кабиной и шкворнем
+  // Шкворень примерно между кабиной и прицепом
+  const hitchX = (player.cabX * 0.4 + player.trailerX * 0.6);
+  const hitchDY = player.h * 0.55; // вертикальное расстояние кабина→шкворень
+  player.tiltAngle = Math.atan2(player.cabX - hitchX, hitchDY) * 0.55;
+  player.tiltAngle = Math.max(-0.18, Math.min(0.18, player.tiltAngle));
+
+  // Угол прицепа — аналогично, но прицеп тянется к шкворню
+  const trailerDY = player.h * 0.65;
+  player.trailerTiltAngle = Math.atan2(player.trailerX - hitchX, trailerDY) * 0.25;
+  player.trailerTiltAngle = Math.max(-0.09, Math.min(0.09, player.trailerTiltAngle));
+
+  // Ограничение позиций
+  const _minX = LANE_CENTERS[0] - LANE_W * 0.48;
+  const _maxX = LANE_CENTERS[2] + LANE_W * 0.48;
+  player.cabX = Math.max(_minX, Math.min(_maxX, player.cabX));
+  player.trailerX = Math.max(_minX, Math.min(_maxX, player.trailerX));
+
+  // Дорожная вибрация (усиливается со скоростью)
+  const wobbleAmp = Math.max(0, (speed - 3.5) * 0.18);
+  player.swayAngle += 0.14 + speed * 0.006;
+  player.sway = Math.sin(player.swayAngle) * wobbleAmp;
+
+  if (Math.abs(player.impactShake) > 0.1) player.impactShake *= 0.68;
+  else player.impactShake = 0;
+  
+  const shake = player.sway + player.impactShake;
+  player.renderX   = player.x       + shake;
+  player.cabRenderX     = player.cabX     + shake;
+  player.trailerRenderX = player.trailerX + shake;
+
+  if (laneChangeCooldown > 0) laneChangeCooldown--;
+  if ((keys['ArrowLeft'] || keys['KeyA']) && laneChangeCooldown === 0 && player.lane > 0) {
+    player.lane--; 
+    laneChangeCooldown = 22;
+  }
+  if ((keys['ArrowRight'] || keys['KeyD']) && laneChangeCooldown === 0 && player.lane < 2) {
+    player.lane++; 
+    laneChangeCooldown = 22;
+  }
+
+  const spawnInt = Math.max(60, 160 - frameCount * 0.025);
+  if (frameCount % Math.floor(spawnInt) === 0) spawnObstacle();
+  
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    const o = obstacles[i];
+    o.y += speed - o.speed;
+    
+    // Небольшое покачивание машин в полосе
+    if (o.wobbleAmp > 0) {
+      o.wobblePhase += 0.025;
+      o.x = LANE_CENTERS[o.lane] + o.laneWobble + Math.sin(o.wobblePhase) * o.wobbleAmp;
+    }
+    
+    if (o.y > H + 130) { obstacles.splice(i, 1); continue; }
+    if (hitCheck(o)) {
+      spawnCrash(player.renderX, player.y);
+      player.impactShake = 20;
+      playCrash();
+      triggerGameOver();
+      return;
+    }
+  }
+
+  // Бонусы
+  if (frameCount % 175 === 0) spawnBonus();
+  for (let i=bonuses.length-1; i>=0; i--) {
+    const b=bonuses[i];
+    b.y += speed;
+    if (b.y > H+80) { bonuses.splice(i,1); continue; }
+    if (Math.abs(player.renderX - b.x) < player.w*0.62 && Math.abs(player.y - b.y) < player.h*0.55) {
+      fuel = Math.min(1.0, fuel+0.38);
+      bonuses.splice(i,1);
+      playPickup();
+      addToast('+топливо', '#44ff88');
+    }
+  }
+
+  // Деревья
+  for (let i=trees.length-1; i>=0; i--) { trees[i].y += speed*1.5; if (trees[i].y > H+130) trees.splice(i,1); }
+  if (trees.length < 20) spawnTree();
+
+  // Частицы
+  for (let i=particles.length-1; i>=0; i--) {
+    const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.3; p.life-=0.04;
+    if (p.life<=0) particles.splice(i,1);
+  }
+
+  // Тосты
+  for (let i=toasts.length-1; i>=0; i--) {
+    const t=toasts[i]; t.y-=1.2; t.life-=0.026;
+    if (t.life<=0) toasts.splice(i,1);
+  }
+
+  if (frameCount%8===0) playEngine();
+}
+
+function hitCheck(o) {
+  const pw=player.w*0.62, ph=player.h*0.68;
+  const ow=o.s*2.8, oh=o.s*5.6;
+  return Math.abs(player.renderX-o.x)<(pw+ow)*0.5 && Math.abs(player.y-o.y)<(ph+oh)*0.5;
+}
+
+function spawnCrash(x, y) {
+  for (let i=0;i<20;i++) {
+    const a=Math.random()*Math.PI*2, v=2+Math.random()*6;
+    particles.push({x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v-2, life:1.0,
+      color:['#ff6600','#ffcc00','#cc2200','#ffffff'][(Math.random()*4)|0], size:2+Math.random()*4});
+  }
+}
+
+function triggerGameOver() {
+  state='gameover';
+  if (Math.floor(score) > record) { record=Math.floor(score); localStorage.setItem('brevna_record', record); }
+  if (!goalReached) bonusPoints = 0;
+  setTimeout(showGameOverScreen, 350);
+  // Сообщаем сайту об окончании игры
+  try {
+    window.parent.postMessage({
+      type: 'BREVNA_GAME_OVER',
+      points: bonusPoints,
+      goalReached,
+      distance: Math.floor(score)
+    }, '*');
+  } catch(e) {}
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  ctx.clearRect(0,0,W,H);
+  if (state==='start')    { drawStart(); return; }
+  if (state==='gameover') { drawGameOver(); return; }
+  drawRoad(); drawTrees(); drawBonuses(); drawObstacles();
+  drawPlayerTruck(); drawParticles(); drawToasts(); drawUI();
+  if (state==='paused') drawPause();
+}
+
+function drawRoad() {
+  ctx.fillStyle='#4e7c3a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#456e32';
+  for(let y=0;y<H;y+=18){ ctx.fillRect(0,y,SHOULDER_W,5); ctx.fillRect(ROADRIGHT,y,SHOULDER_W,5); }
+  ctx.fillStyle='#6e7278'; ctx.fillRect(ROAD_LEFT,0,ROAD_W,H);
+  ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.fillRect(ROAD_LEFT,0,ROAD_W*0.5,H);
+  ctx.fillStyle='#e8e8e8';
+  ctx.fillRect(ROAD_LEFT-3,0,5,H); ctx.fillRect(ROADRIGHT-2,0,5,H);
+  const dashLen=32, gap=28, cycle=dashLen+gap;
+  ctx.fillStyle='#d0d0c8';
+  for(let li=1;li<=2;li++){
+    const lx=Math.floor(ROAD_LEFT+LANE_W*li);
+    let y=-cycle+(roadOffset%cycle);
+    while(y<H+cycle){ ctx.fillRect(lx-2,y,4,dashLen); y+=cycle; }
+  }
+}
+
+function drawTrees()     { for(const t of trees)     drawTree(t.x,t.y,t.s,t.variant); }
+function drawBonuses()   { for(const b of bonuses)   drawFuelCan(b.x,b.y,b.s); }
+function drawObstacles() { for(const o of obstacles) o.type==='sedan'?drawGreenSedan(o.x,o.y,o.s):drawOrangeTruck(o.x,o.y,o.s); }
+
+function drawPlayerTruck() {
+  drawTruck(
+    player.cabRenderX,
+    player.trailerRenderX,
+    player.y,
+    Math.floor(player.w / 3.2),
+    player.tiltAngle,
+    player.trailerTiltAngle
+  );
+}
+
+function drawParticles() {
+  for(const p of particles){
+    ctx.globalAlpha=Math.max(0,p.life);
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size);
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawToasts() {
+  const tFs = Math.round(Math.min(W,H)*0.048);
+  ctx.save();
+  ctx.font='bold '+tFs+'px "Segoe UI",Arial,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,0.7)'; ctx.shadowBlur=5;
+  for(const t of toasts){
+    ctx.globalAlpha=Math.min(1,t.life*2);
+    ctx.fillStyle=t.color;
+    ctx.fillText(t.text, t.x, t.y);
+  }
+  ctx.globalAlpha=1; ctx.restore();
+}
+
+function drawUI() {
+  const sc  = Math.max(1, Math.floor(W/120));
+  const pad = Math.floor(W*0.04);
+
+  // Левая панель
+  let lx=pad, ly=pad;
+  const iR = sc*3.5;
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=sc*0.7;
+  ctx.beginPath(); ctx.arc(lx+iR, ly+iR, iR, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#ff8800'; ctx.lineWidth=sc*0.6;
+  ctx.beginPath(); ctx.moveTo(lx+iR, ly+iR); ctx.lineTo(lx+iR+iR*0.7, ly+iR-iR*0.6); ctx.stroke();
+  ctx.save(); ctx.font='bold '+Math.round(Math.min(W,H)*0.038)+'px "Segoe UI",Arial,sans-serif';
+  ctx.fillStyle='#ffffff'; ctx.textBaseline='middle'; ctx.textAlign='left';
+  ctx.fillText(speedKmh+' км/ч', lx+iR*2+4, ly+iR); ctx.restore();
+
+  ly += sc*10;
+  ctx.fillStyle='#fff'; ctx.fillRect(lx+sc, ly, sc*0.8, sc*6.5);
+  ctx.fillStyle='#111'; ctx.fillRect(lx+sc*1.8, ly, sc*3.8, sc*2.8);
+  ctx.fillStyle='#fff'; ctx.fillRect(lx+sc*1.8, ly, sc*1.9, sc*1.4); ctx.fillRect(lx+sc*3.7, ly+sc*1.4, sc*1.9, sc*1.4);
+  ctx.save(); ctx.font='bold '+Math.round(Math.min(W,H)*0.038)+'px "Segoe UI",Arial,sans-serif';
+  ctx.fillStyle='#ffffff'; ctx.textBaseline='middle'; ctx.textAlign='left';
+  ctx.fillText(Math.floor(score)+' м', lx+iR*2+4, ly+iR); ctx.restore();
+
+  ly += sc*9;
+  ctx.save(); ctx.font=Math.round(Math.min(W,H)*0.032)+'px "Segoe UI",Arial,sans-serif';
+  ctx.fillStyle='#ffcc44'; ctx.textBaseline='top'; ctx.textAlign='left';
+  ctx.fillText('рекорд: '+record+' м', lx, ly); ctx.restore();
+
+  // Кнопки
+  const bR=Math.floor(W*0.055), bX=W-pad-bR, bY=pad+bR;
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.arc(bX,bY,bR,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(bX,bY,bR,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.fillRect(bX-bR*0.35, bY-bR*0.45, bR*0.25, bR*0.9);
+  ctx.fillRect(bX+bR*0.1,  bY-bR*0.45, bR*0.25, bR*0.9);
+  drawUI._pb={x:bX,y:bY,r:bR};
+
+  // ── Прогресс-бар цели 500 м ──
+  if (!goalReached) {
+    const pgW = W * 0.55, pgH = Math.max(7, H * 0.018);
+    const pgX = (W - pgW) / 2, pgY = H * 0.06;
+    const progress = Math.min(1, score / GOAL_METERS);
+    // Фон
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    rRect(pgX - 2, pgY - 2, pgW + 4, pgH + 4, 4, 'rgba(0,0,0,0.45)');
+    // Трек
+    ctx.fillStyle = '#333';
+    ctx.fillRect(pgX, pgY, pgW, pgH);
+    // Заполнение
+    const fillColor = progress > 0.75 ? '#44ff88' : progress > 0.4 ? '#ffcc44' : '#4488ff';
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(pgX, pgY, pgW * progress, pgH);
+    // Метка цели
+    ctx.save();
+    ctx.font = 'bold '+Math.round(Math.min(W,H)*0.036)+'px "Segoe UI",Arial,sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 4;
+    ctx.fillText(Math.floor(score) + ' / ' + GOAL_METERS + ' м', W / 2, pgY + pgH + 3);
+    ctx.restore();
+  } else {
+    // Цель достигнута — показываем звёздочку и баллы
+    ctx.save();
+    ctx.font = 'bold '+Math.round(Math.min(W,H)*0.04)+'px "Segoe UI",Arial,sans-serif';
+    ctx.fillStyle = '#ffcc44';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 5;
+    ctx.fillText('★ ЦЕЛЬ ДОСТИГНУТА! +' + bonusPoints + ' баллов', W / 2, H * 0.055);
+    ctx.restore();
+  }
+
+  const sY=bY+bR*2.5;
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.arc(bX,sY,bR,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=soundOn?'#fff':'#888'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(bX,sY,bR,0,Math.PI*2); ctx.stroke();
+  const sp=bR*0.3;
+  ctx.fillStyle=soundOn?'#fff':'#888';
+  ctx.fillRect(bX-sp*1.3, sY-sp*0.8, sp, sp*1.6);
+  ctx.beginPath(); ctx.moveTo(bX-sp*0.3,sY-sp*0.8); ctx.lineTo(bX+sp*0.6,sY-sp*1.4); ctx.lineTo(bX+sp*0.6,sY+sp*1.4); ctx.lineTo(bX-sp*0.3,sY+sp*0.8); ctx.closePath(); ctx.fill();
+  if(soundOn){ ctx.strokeStyle='#fff'; ctx.lineWidth=sp*0.4; ctx.beginPath(); ctx.arc(bX+sp*0.6,sY,sp*1.0,-Math.PI/3,Math.PI/3); ctx.stroke(); }
+  else { ctx.strokeStyle='#f44'; ctx.lineWidth=sp*0.4; ctx.beginPath(); ctx.moveTo(bX+sp*0.2,sY-sp*0.8); ctx.lineTo(bX+sp*1.2,sY+sp*0.8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bX+sp*1.2,sY-sp*0.8); ctx.lineTo(bX+sp*0.2,sY+sp*0.8); ctx.stroke(); }
+  drawUI._sb={x:bX,y:sY,r:bR};
+
+  const gW=Math.floor(W*0.052), gH=Math.floor(H*0.22);
+  const gX=W-pad-gW, gY=Math.floor(H*0.34);
+  ctx.fillStyle='#111'; ctx.fillRect(gX-2,gY-2,gW+4,gH+4);
+  ctx.fillStyle='#333'; ctx.fillRect(gX,gY,gW,gH);
+  ctx.fillStyle=fuel>0.5?'#c8f040':fuel>0.25?'#ffcc00':'#ff4400';
+  const fH=Math.floor(gH*fuel);
+  ctx.fillRect(gX, gY+gH-fH, gW, fH);
+  ctx.fillStyle='#000';
+  for(let t=1;t<5;t++) ctx.fillRect(gX+gW*0.3, gY+gH*t/5-1, gW*0.4, 2);
+  ctx.strokeStyle='#888'; ctx.lineWidth=2; ctx.strokeRect(gX,gY,gW,gH);
+  drawFuelCan(gX+gW/2, gY+gH+Math.floor(gW*0.44)*1.5, Math.floor(gW*0.44));
+
+  if(fuel<0.2 && ((frameCount/18)|0)%2===0){
+    ctx.save();
+    ctx.font='bold '+Math.round(Math.min(W,H)*0.048)+'px "Segoe UI",Arial,sans-serif';
+    ctx.fillStyle='#ff4400'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,0.7)'; ctx.shadowBlur=6;
+    ctx.fillText('⛽ мало топлива!', W/2, H*0.24);
+    ctx.restore();
+  }
+}
+drawUI._pb=null; drawUI._sb=null;
+
+function drawPause() {
+  ctx.fillStyle='rgba(0,0,0,0.62)'; ctx.fillRect(0,0,W,H);
+  const vm=Math.min(W,H);
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='bold '+Math.round(vm*0.09)+'px "Segoe UI",Arial,sans-serif';
+  ctx.fillStyle='#ffcc44';
+  ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=8;
+  ctx.fillText('ПАУЗА', W/2, H*0.44);
+  ctx.font=Math.round(vm*0.042)+'px "Segoe UI",Arial,sans-serif';
+  ctx.fillStyle='#aaaaaa'; ctx.shadowBlur=3;
+  ctx.fillText('нажми чтобы продолжить', W/2, H*0.55);
+  ctx.restore();
+}
+
+function drawStart() {
+  // Фон дороги на canvas (виден сквозь полупрозрачный оверлей)
+  ctx.fillStyle='#3a5c2a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#6e7278'; ctx.fillRect(ROAD_LEFT,0,ROAD_W,H);
+  ctx.fillStyle='#e8e8e8'; ctx.fillRect(ROAD_LEFT-3,0,5,H); ctx.fillRect(ROADRIGHT-2,0,5,H);
+  ctx.fillStyle='#d0d0c8';
+  for(let li=1;li<=2;li++){const lx=Math.floor(ROAD_LEFT+LANE_W*li); for(let y=0;y<H;y+=60) ctx.fillRect(lx-2,y,4,32);}
+  for(let i=0;i<trees.length;i++) drawTree(trees[i].x, trees[i].y, trees[i].s, trees[i].variant);
+  drawTruck(LANE_CENTERS[1], LANE_CENTERS[1], H*0.62, Math.floor(LANE_W*0.18), 0, 0);
+}
+
+function drawGameOver() {
+  drawRoad(); drawTrees(); drawObstacles(); drawBonuses(); drawPlayerTruck(); drawParticles();
+  ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(0,0,W,H);
+}
+
+function showGameOverScreen() {
+  const scrOver = document.getElementById('scr-over');
+  document.getElementById('ov-score').textContent = Math.floor(score) + ' м';
+  const ob = document.getElementById('ov-best');
+  if (goalReached) {
+    ob.textContent = '🏆 ЦЕЛЬ ВЫПОЛНЕНА! +' + bonusPoints + ' баллов';
+  } else if (Math.floor(score) >= record && record > 0) {
+    ob.textContent = '🏆 НОВЫЙ РЕКОРД!';
+  } else if (record > 0) {
+    ob.textContent = 'Рекорд: ' + record + ' м';
+  } else {
+    ob.textContent = '';
+  }
+  scrOver.style.display = 'flex';
+}
+
+function loop() { update(); render(); requestAnimationFrame(loop); }
+
+// ─── INPUT ───
+document.addEventListener('keydown', e => {
+  keys[e.code]=true;
+  if(['Space','Escape','KeyP'].includes(e.code)){
+    if(state==='playing') state='paused'; else if(state==='paused') state='playing';
+    e.preventDefault();
+  }
+  if(e.code==='Enter' && (state==='start'||state==='gameover')){ initGame(); state='playing'; }
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.code]=false; });
+
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  if(!e.touches.length) return;
+  const t=e.touches[0], r=canvas.getBoundingClientRect();
+  handleInput((t.clientX-r.left)*W/r.width, (t.clientY-r.top)*H/r.height);
+},{passive:false});
+
+canvas.addEventListener('click', e=>{
+  const r=canvas.getBoundingClientRect();
+  handleInput((e.clientX-r.left)*W/r.width, (e.clientY-r.top)*H/r.height);
+});
+
+function handleInput(tx, ty) {
+  if(state==='start'||state==='gameover'){
+    document.getElementById('scr-start').style.display='none';
+    document.getElementById('scr-over').style.display='none';
+    initGame(); state='playing'; return;
+  }
+  if(state==='playing'||state==='paused'){
+    if(drawUI._pb && Math.hypot(tx-drawUI._pb.x, ty-drawUI._pb.y)<drawUI._pb.r*1.5){
+      state=state==='playing'?'paused':'playing'; return;
+    }
+    if(drawUI._sb && Math.hypot(tx-drawUI._sb.x, ty-drawUI._sb.y)<drawUI._sb.r*1.5){
+      soundOn=!soundOn; return;
+    }
+  }
+  if(state==='paused'){ state='playing'; return; }
+  
+  if(state==='playing' && laneChangeCooldown===0){
+    if (tx < W / 2 && player.lane > 0) {
+      player.lane--; 
+      laneChangeCooldown = 22;
+    } else if (tx >= W / 2 && player.lane < 2) {
+      player.lane++; 
+      laneChangeCooldown = 22;
+    }
+  }
+}
+
+// ── HTML кнопки ──
+document.getElementById('btn-start').addEventListener('click', function(e){
+  e.stopPropagation();
+  document.getElementById('scr-start').style.display='none';
+  initGame(); state='playing';
+});
+document.getElementById('btn-retry').addEventListener('click', function(e){
+  e.stopPropagation();
+  document.getElementById('scr-over').style.display='none';
+  initGame(); state='playing';
+});
+['btn-start','btn-retry'].forEach(function(id){
+  document.getElementById(id).addEventListener('touchend', function(e){
+    e.preventDefault(); e.stopPropagation();
+    this.click();
+  });
+});
+
+window.addEventListener('resize', resize);
+resize();
+state='start';
+loop();
+</script>
+</body>
+</html>

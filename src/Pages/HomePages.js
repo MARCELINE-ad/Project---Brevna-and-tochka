@@ -1,5 +1,8 @@
 import React, { Component } from 'react'
 import Slider from 'react-slick'
+import Items from '../components/Items'
+import FastFilter from '../components/FastFilter'
+
 import 'slick-carousel/slick/slick.css'
 import 'slick-carousel/slick/slick-theme.css'
 
@@ -12,65 +15,72 @@ import BonusWheel from '../img/BonusWheel.png'
 import CityRunner from '../img/CityRunner.png'
 import TowerBuilder from '../img/TowerBuilder.png'
 
-  const PrevArrow = ({ onClick }) => (
+const PrevArrow = ({ onClick }) => (
     <button className="custom-prev" onClick={onClick}>
-      <img src={Arrow} alt="prev" />
+        <img src={Arrow} alt="prev" />
     </button>
 );
-  const NextArrow = ({ onClick }) => (
+
+const NextArrow = ({ onClick }) => (
     <button className="custom-next" onClick={onClick}>
-      <img src={Arrow} alt="next" style={{ transform: 'scaleX(-1)' }} />
+        <img src={Arrow} alt="next" style={{ transform: 'scaleX(-1)' }} />
     </button>
 );
 
 export default class HomePages extends Component {
-  render() {
+    render() {
         const settings = {
-      prevArrow: <PrevArrow />, // кастом стрелки
-      nextArrow: <NextArrow />, // кастом стрелки
-      dots: true,        // точки внизу
-      infinite: true,    // зацикленный
-      speed: 500,        // скорость анимации в мс
-      slidesToShow: 1,   // показывать 1 слайд
-      slidesToScroll: 1, // листать по 1
-      autoplay: true,    // автопрокрутка
-      autoplaySpeed: 3000, // автопрокрутка каждые 3 секунды
-      arrows: true, //cтрелочки
+            prevArrow: <PrevArrow />,
+            nextArrow: <NextArrow />,
+            dots: true,
+            infinite: true,
+            speed: 500,
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            autoplay: true,
+            autoplaySpeed: 3000,
+            arrows: true,
         }
-    return (
-  <div className="WelcomeAd">
-    <Slider {...settings}>
-      <div className="slide">
-        <img src={addblock} alt="Banner 1" />
-      </div>
-      <div className="slide">
-        <img src={addblock2} alt="Banner 2" />
-      </div>
-      <div className="slide">
-        <img src={addblock3} alt="Banner 3" />
-      </div>
-    </Slider>
 
-        <div class="promo-grid">
-      <div className="BonusAd" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
-        <img src={BonusAd} alt="Bonus Ad" />
-      </div>
+        return (
+            <div className="WelcomeAd">
+                {/* Слайдер */}
+                <Slider {...settings}>
+                    <div className="slide"><img src={addblock} alt="Banner 1" /></div>
+                    <div className="slide"><img src={addblock2} alt="Banner 2" /></div>
+                    <div className="slide"><img src={addblock3} alt="Banner 3" /></div>
+                </Slider>
 
-      <div className="BonusWheel" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
-        <img src={BonusWheel} alt="Bonus Wheel" />
-      </div>
+                {/* Сетка баннеров */}
+                <div className="promo-grid">
+                    <div className="BonusAd" onClick={() => window.open('https://youtube.com', '_blank')}>
+                        <img src={BonusAd} alt="Bonus Ad" />
+                    </div>
+                    <div className="BonusWheel" onClick={() => window.open('https://youtube.com', '_blank')}>
+                        <img src={BonusWheel} alt="Bonus Wheel" />
+                    </div>
+                    <div className="CityRunner" onClick={() => window.location.href = '/MiniGame/runner.html'}>
+                        <img src={CityRunner} alt="City Runner" />
+                    </div>
+                    <div className="TowerBuilder" onClick={() => window.location.href = '/MiniGame/tower.html'}>
+                        <img src={TowerBuilder} alt="Tower Builder" />
+                    </div>
+                </div>
 
-      <div className="CityRunner" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
-        <img src={CityRunner} alt="City Runner" />
-      </div>
+                {/* Блок товаров на главной */}
+                <div className="home-catalog">
+                    <FastFilter onChoose={this.props.onChoose} />
 
-      <div className="TowerBuilder" onClick={() => window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}>
-        <img src={TowerBuilder} alt="Tower Builder" />
-      </div>
-      
-    </div>
-    
-  </div>
-)
-  }
+                    <Items
+                        items={this.props.items.slice(0, 3)} 
+                        addToOrder={this.props.addToOrder} 
+                        // ПЕРЕДАЕМ НОВЫЕ ПРОПСЫ
+                        orders={this.props.orders}
+                        onIncrease={this.props.onIncrease}
+                        onDecrease={this.props.onDecrease}
+                    />
+                </div>
+            </div>
+        )
+    }
 }

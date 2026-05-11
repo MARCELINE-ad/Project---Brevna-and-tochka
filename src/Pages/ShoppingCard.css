@@ -74,3 +74,205 @@
 /* Ошибки */
 .input-field.error input { border-color: #ff4d4d; }
 .error-msg { color: #ff4d4d; font-size: 12px; margin-top: 5px; display: block; }
+
+/* Скрываем элементы на сайте */
+.pdf-only-header, .pdf-total-footer {
+    display: none;
+}
+
+/* Эти стили html2canvas применит только при генерации снимка */
+.cart-left .pdf-only-header {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.cart-left .pdf-total-footer {
+    display: block;
+    margin-top: 30px;
+    text-align: right;
+    padding: 20px;
+}
+
+.cart-left .pdf-total-footer hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin-bottom: 10px;
+}
+
+/* Убираем тени карточек в PDF, чтобы не было черных полос */
+.cart-left .cart-product-card {
+    box-shadow: none !important;
+    border: 1px solid #f0f0f0;
+    margin-bottom: 10px;
+}
+/* Принудительно белый фон для блока заказа при генерации */
+.cart-left {
+    background-color: white !important;
+}
+
+/* Скрываем кнопки в PDF через настройки клона, 
+   но на всякий случай можно добавить это: */
+@media print {
+    .product-controls, .btn-remove {
+        display: none !important;
+    }
+}
+/* Контейнер для кнопок + и - */
+.product-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f1f1f1; /* Светлый фон как у инпутов */
+  padding: 5px 12px;
+  border-radius: 20px;
+  height: fit-content;
+}
+
+/* Общий стиль для кнопок + и - */
+.product-controls button {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+}
+
+/* Эффект при наведении на + или - */
+.product-controls button:hover {
+  background-color: #e2e2e2;
+  transform: scale(1.1);
+}
+
+/* Цифра количества между кнопками */
+.product-controls span {
+  font-weight: 600;
+  font-size: 16px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Кнопка удаления (Х) */
+.btn-remove {
+  background: #ffe5e5; /* Нежно-красный фон */
+  color: #ff4d4d;      /* Яркий красный текст */
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 10px;
+}
+
+/* Эффект при наведении на крестик */
+.btn-remove:hover {
+  background: #ff4d4d;
+  color: white;
+  transform: rotate(90deg); /* Прикольный эффект поворота */
+}
+/* Шапка корзины с кнопкой очистки */
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.btn-clear {
+  background: #f5f5f5;
+  color: #888;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-clear:hover {
+  background: #ff4d4d;
+  color: white;
+  border-color: #ff4d4d;
+}
+
+/* Правая колонка - Карточка итога */
+.summary-card {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 20px;
+}
+
+/* Строки с товарами и доставкой */
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: #666;
+  font-size: 15px;
+}
+
+/* Итоговая сумма */
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.summary-total span:first-child {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+.total-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a3c34; /* Тот самый темно-зеленый */
+}
+
+/* Главная кнопка заказа */
+.btn-checkout {
+  width: 100%;
+  background: #1a3c34;
+  color: white;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(26, 60, 52, 0.2);
+}
+
+.btn-checkout:hover {
+  background: #255146;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(26, 60, 52, 0.3);
+}
+
+.btn-checkout:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}

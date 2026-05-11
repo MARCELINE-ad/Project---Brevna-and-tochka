@@ -1,23 +1,42 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 
 export class Item extends Component {
   render() {
-    console.log('Item:', this.props.addToOrder)
+    const { item, addToOrder, orders, onIncrease, onDecrease } = this.props;
+
     // Защита от пустого объекта
-    if (!this.props.item) return null;
+    if (!item) return null;
+
+    // Находим этот товар в корзине, чтобы узнать количество
+    const orderItem = orders ? orders.find(el => el.id === item.id) : null;
+    const quantity = orderItem ? orderItem.quantity : 0;
 
     return (
       <div className='item'>
-        <img src={"./img/" + this.props.item.img} alt={this.props.item.title}/>
-        <h2>{this.props.item.title}</h2>
-        <p className='desc'>{this.props.item.desc}</p>
-        <b>{this.props.item.price}₽</b>
-        <div 
-            className='add-to-card' 
-            onClick={() => this.props.addToOrder(this.props.item)}
-        >
-          В корзину
-        </div>
+        <Link to={`/product/${item.id}`} className="item-link">
+          <img src={"./img/" + item.img} alt={item.title}/>
+          <h2>{item.title}</h2>
+        </Link>
+        
+        <p className='desc'>{item.desc}</p>
+        <b>{item.price}₽</b>
+
+        {/* Умная кнопка: если товар в корзине, показываем управление количеством */}
+        {quantity > 0 ? (
+          <div className='item-controls'>
+            <button className="ctrl-btn" onClick={() => onDecrease(item.id)}>-</button>
+            <span className="ctrl-num">{quantity}</span>
+            <button className="ctrl-btn" onClick={() => onIncrease(item.id)}>+</button>
+          </div>
+        ) : (
+          <div 
+              className='add-to-card' 
+              onClick={() => addToOrder(item)}
+          >
+            В корзину
+          </div>
+        )}
       </div>
     );
   }

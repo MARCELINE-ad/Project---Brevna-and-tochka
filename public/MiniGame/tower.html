@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tower Builder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Nunito:wght@700;800;900&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#87CEEB;
+  font-family:'Nunito',sans-serif;
+  overflow:hidden;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#wrap{
+  position:relative;
+  width:390px;
+  height:100vh;
+  max-height:750px;
+  overflow:hidden;
+  background:#87CEEB;
+}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+/* HUD */
+#hud{
+  position:absolute;top:12px;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:10;
+}
+.hud-pill{
+  background:rgba(0,0,0,0.55);
+  border:3px solid #4CAF50;
+  border-radius:40px;
+  padding:8px 28px;
+  text-align:center;
+  backdrop-filter:blur(4px);
+  min-width:120px;
+}
+.hud-pill .num{
+  font-family:'Oswald',sans-serif;
+  font-size:2rem;font-weight:700;
+  color:#4CAF50;line-height:1;
+  text-shadow:0 2px 6px rgba(0,0,0,0.5);
+}
+.hud-pill .num #goal-sep{
+  font-size:1.1rem;
+  color:rgba(255,255,255,0.4);
+}
+.hud-pill .lbl{
+  font-size:0.58rem;font-weight:800;
+  color:rgba(255,255,255,0.6);
+  letter-spacing:3px;text-transform:uppercase;
+}
+#mission-track{
+  width:80px;height:5px;
+  background:rgba(255,255,255,0.2);
+  border-radius:3px;margin:4px auto 0;overflow:hidden;
+}
+#mission-fill{
+  height:100%;background:#4CAF50;
+  border-radius:3px;
+  transition:width .3s ease;
+}
+
+/* Combo */
+#combo{
+  position:absolute;top:100px;left:0;right:0;
+  text-align:center;pointer-events:none;z-index:10;
+}
+#combo span{
+  display:inline-block;
+  background:#E84545;color:#fff;
+  font-family:'Oswald',sans-serif;
+  font-size:1.4rem;font-weight:700;
+  padding:8px 24px;border-radius:6px;
+  border:3px solid #fff;
+  box-shadow:0 4px 18px rgba(232,69,69,.6),inset 0 2px 0 rgba(255,255,255,.3);
+  opacity:0;letter-spacing:1px;
+}
+@keyframes cpop{
+  0%  {opacity:0;transform:scale(.5) translateY(0)}
+  30% {opacity:1;transform:scale(1.15) translateY(-10px)}
+  65% {opacity:1;transform:scale(1)   translateY(-16px)}
+  100%{opacity:0;transform:scale(.9)  translateY(-38px)}
+}
+#combo span.run{animation:cpop .9s ease forwards;}
+
+/* Hint */
+#hint{
+  position:absolute;bottom:18px;left:0;right:0;
+  text-align:center;font-family:'Oswald',sans-serif;
+  font-size:0.85rem;font-weight:600;letter-spacing:3px;
+  color:rgba(255,255,255,0.7);
+  text-shadow:0 1px 4px rgba(0,0,0,0.5);
+  pointer-events:none;z-index:10;
+  text-transform:uppercase;display:none;
+}
+@keyframes hblink{0%,100%{opacity:.5}50%{opacity:1}}
+#hint{animation:hblink 1.6s ease infinite;}
+
+/* SCREENS */
+.scr{
+  position:absolute;inset:0;z-index:100;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;
+  padding-bottom:60px;
+}
+/* start screen — see-through so canvas BG shows */
+#scr-start{background:rgba(0,0,0,0.45);}
+#scr-over {background:rgba(0,0,0,0.6);display:none;}
+#scr-win  {background:rgba(0,0,0,0.75);display:none;}
+
+/* Mission complete badge */
+#mission-badge{
+  position:absolute;top:90px;left:0;right:0;
+  text-align:center;pointer-events:none;z-index:15;
+  display:none;
+}
+#mission-badge span{
+  display:inline-block;
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  color:#fff;
+  font-family:'Oswald',sans-serif;
+  font-size:1.3rem;font-weight:700;
+  padding:10px 28px;border-radius:8px;
+  border:3px solid #fff;
+  box-shadow:0 4px 20px rgba(255,165,0,.7),inset 0 2px 0 rgba(255,255,255,.4);
+  letter-spacing:1px;
+}
+@keyframes badgePop{
+  0%  {opacity:0;transform:scale(.4) translateY(20px)}
+  50% {opacity:1;transform:scale(1.1) translateY(-8px)}
+  75% {opacity:1;transform:scale(1)   translateY(0)}
+  100%{opacity:1;transform:scale(1)   translateY(0)}
+}
+#mission-badge.show{display:block;animation:badgePop .6s ease forwards;}
+
+/* Coins fly animation */
+@keyframes coinFly{
+  0%  {opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-60px) scale(1.5)}
+}
+.coin-pop{
+  position:absolute;z-index:200;
+  font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;
+  color:#FFD700;text-shadow:0 2px 8px rgba(0,0,0,.5);
+  pointer-events:none;
+  animation:coinFly .9s ease forwards;
+}
+
+/* Win screen */
+#scr-win .scr-logo{color:#FFD700;text-shadow:3px 3px 0 #B8860B,0 4px 18px rgba(0,0,0,.6);}
+.win-reward{
+  background:linear-gradient(135deg,#1a1a2e,#16213e);
+  border:4px solid #FFD700;
+  border-radius:12px;
+  padding:16px 36px;margin-bottom:14px;
+  text-align:center;
+  box-shadow:4px 4px 0 #B8860B,0 0 30px rgba(255,215,0,.3);
+}
+.win-reward .coins{
+  font-family:'Oswald',sans-serif;
+  font-size:3.2rem;font-weight:700;
+  color:#FFD700;line-height:1;
+  text-shadow:0 0 20px rgba(255,215,0,.8);
+}
+.win-reward .rlbl{
+  font-size:.65rem;font-weight:800;
+  color:rgba(255,255,255,0.5);
+  letter-spacing:3px;text-transform:uppercase;
+}
+
+/* Back to site button */
+.backbtn{
+  background:linear-gradient(180deg,#4A90D9 0%,#2C5F8A 100%);
+  border:none;border-radius:8px;
+  padding:12px 36px;
+  font-family:'Oswald',sans-serif;
+  font-size:1rem;font-weight:700;
+  letter-spacing:2px;color:#fff;
+  cursor:pointer;
+  box-shadow:0 5px 0 #1a3a58,0 7px 16px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.25);
+  text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  transition:transform .1s,box-shadow .1s;
+  margin-top:10px;
+  text-decoration:none;
+  display:inline-block;
+}
+.backbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #1a3a58,0 4px 10px rgba(0,0,0,.4);}
+
+.scr-logo{
+  font-family:'Oswald',sans-serif;
+  font-size:3.2rem;font-weight:700;
+  color:#fff;letter-spacing:4px;
+  text-shadow:3px 3px 0 #C85A00, 0 4px 18px rgba(0,0,0,0.6);
+  text-align:center;margin-bottom:6px;
+}
+.scr-logo span{color:#F5A623;}
+.scr-sub{
+  font-size:.9rem;font-weight:800;
+  color:rgba(255,255,255,.8);
+  letter-spacing:1px;margin-bottom:28px;text-align:center;
+}
+.sbox{
+  background:#fff;
+  border:4px solid #C85A00;
+  border-radius:10px;
+  padding:12px 44px;
+  margin-bottom:10px;
+  text-align:center;
+  box-shadow:4px 4px 0 #C85A00;
+}
+.sbox .big{
+  font-family:'Oswald',sans-serif;
+  font-size:2.8rem;font-weight:700;
+  color:#C85A00;line-height:1;
+}
+.sbox .lbl{
+  font-size:.6rem;font-weight:800;
+  color:#999;letter-spacing:3px;text-transform:uppercase;
+}
+.sbox-best{
+  font-family:'Oswald',sans-serif;
+  font-size:1rem;font-weight:700;
+  color:#F5A623;margin-bottom:22px;
+  letter-spacing:1px;min-height:1.5em;
+  text-shadow:1px 1px 0 rgba(0,0,0,.3);
+}
+.playbtn{
+  background:linear-gradient(180deg,#F5A623 0%,#C85A00 100%);
+  border:none;border-radius:8px;
+  padding:16px 56px;
+  font-family:'Oswald',sans-serif;
+  font-size:1.4rem;font-weight:700;
+  letter-spacing:3px;color:#fff;
+  cursor:pointer;
+  box-shadow:0 6px 0 #8B3A00,0 8px 20px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.3);
+  text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  transition:transform .1s,box-shadow .1s;
+}
+.playbtn:active{transform:translateY(3px);box-shadow:0 3px 0 #8B3A00,0 5px 12px rgba(0,0,0,.4);}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div class="hud-pill" id="goal-pill">
+      <div class="num" id="hud-score">0<span id="goal-sep">/30</span></div>
+      <div class="lbl">цель</div>
+      <div id="mission-track"><div id="mission-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Mission complete badge (flies in mid-game) -->
+  <div id="mission-badge"><span>🏆 МИССИЯ ВЫПОЛНЕНА!</span></div>
+
+  <div id="combo"><span id="combo-span"></span></div>
+  <div id="hint">↓ НАЖМИ ЧТОБЫ ПОЛОЖИТЬ ↓</div>
+
+  <div class="scr" id="scr-start">
+    <div class="scr-logo">TOWER<br><span>BUILDER</span></div>
+    <div class="scr-sub">🧱 СТЕКИРУЙ 30 БЛОКОВ — ПОЛУЧИ БАЛЛЫ!</div>
+    <button class="playbtn" id="btn-start">СТРОИТЬ!</button>
+    <a class="backbtn" href="/" id="btn-back-start">🏠 НА САЙТ</a>
+  </div>
+
+  <div class="scr" id="scr-over">
+    <div class="scr-logo" style="margin-bottom:14px">УПАЛО!</div>
+    <div class="sbox">
+      <div class="big" id="ov-score">0</div>
+      <div class="lbl">этажей</div>
+    </div>
+    <div class="sbox-best" id="ov-best"></div>
+    <button class="playbtn" id="btn-retry">ЕЩЁ РАЗ!</button>
+    <a class="backbtn" href="javascript:history.back()" id="btn-back-over">🏠 НА САЙТ</a>
+  </div>
+
+  <!-- Win screen: shown when player reaches 30 blocks -->
+  <div class="scr" id="scr-win">
+    <div class="scr-logo" style="margin-bottom:10px">МИССИЯ<br><span>ВЫПОЛНЕНА!</span></div>
+    <div class="scr-sub">🏗️ ТЫ ПОСТРОИЛ 30-ЭТАЖНУЮ БАШНЮ!</div>
+    <div class="win-reward">
+      <div class="coins" id="win-coins">+500</div>
+      <div class="rlbl">бонусных баллов</div>
+    </div>
+    <div class="sbox">
+      <div class="big" id="win-score">30</div>
+      <div class="lbl">этажей</div>
+    </div>
+    <button class="playbtn" id="btn-win-retry" style="margin-bottom:0">ЕЩЁРАЗ!</button>
+    <a class="backbtn" href="javascript:history.back()" id="btn-back-win">🏠 ЗАБРАТЬ БАЛЛЫ</a>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var c   = document.getElementById('c');
+var ctx = c.getContext('2d');
+var wrap= document.getElementById('wrap');
+var W=0,H=0;
+
+function resize(){
+  W=wrap.clientWidth; H=wrap.clientHeight;
+  c.width=W; c.height=H;
+}
+resize();
+window.addEventListener('resize',resize);
+
+/* ── rounded rect ── */
+function rr(x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+/* ── Block materials ── */
+var MATS = [
+  // [face, top-shine, shadow, mortar]
+  {name:'Кирпич',  face:'#C85A1A', shine:'#E07040', shadow:'#8B3210', mortar:'#D4B896'},
+  {name:'Бетон',   face:'#8A8A8A', shine:'#AAAAAA', shadow:'#555555', mortar:'#999'},
+  {name:'Дерево',  face:'#8B5E3C', shine:'#A07048', shadow:'#5A3018', mortar:'#C4944A'},
+  {name:'Камень',  face:'#6A7A6A', shine:'#8A9A8A', shadow:'#3A4A3A', mortar:'#9AAA9A'},
+  {name:'Металл',  face:'#5A7A9A', shine:'#7AAAC4', shadow:'#2A4A6A', mortar:'#8AB0CC'},
+  {name:'Кирпич',  face:'#C85A1A', shine:'#E07040', shadow:'#8B3210', mortar:'#D4B896'},
+];
+
+var BH    = 42;   // block height px
+var IW    = 210;  // initial block width
+var TOPPAD= 130;  // px from top where moving block lives (fixed)
+
+/* ── State ── */
+var mode ='idle';
+var score=0, best=0;
+var stack=[];   // [{x,w,mat,seed}]
+var mov=null;   // {x,w,mat,spd,dir}
+var parts=[];
+var strk=0;
+var matIdx=0;
+
+var perfectFlash=0; // countdown for white flash on perfect placement
+var flashPulse=0;   // for screen shake counter
+var camY=0, tCam=0;
+
+/* blockScreenY: given stack index, what is the TOP-Y on screen?
+   stack[0] is at ground. Ground is at H - some margin.        */
+var GROUND_Y; // computed each resize
+function updateGroundY(){ GROUND_Y = H - 60; }
+updateGroundY();
+
+function blockTop(idx){
+  // world Y of top-edge of block idx (0=ground level)
+  // world: 0 = top of ground block, going up = negative
+  // screen: GROUND_Y - idx*BH - camY
+  return GROUND_Y - (idx+1)*BH - camY;
+}
+
+/* The moving block always appears at TOPPAD from screen top */
+function movScreenY(){ return TOPPAD; }
+
+/* ── Init ── */
+function init(){
+  score=0; camY=0; tCam=0;
+  stack=[]; parts=[]; strk=0; matIdx=0; perfectFlash=0; flashPulse=0;
+  updateGroundY();
+  // base
+  for(var i=0;i<3;i++) stack.push({x:(W-IW)/2,w:IW,mat:MATS[0],seed:i*7});
+  // set camera so top of base stack is visible near TOPPAD area
+  var desiredTopScreen = TOPPAD + BH*2.2;
+  tCam = GROUND_Y - stack.length*BH - desiredTopScreen;
+  camY = tCam; // start without lerp
+  spawn();
+  document.getElementById('hud-score').textContent='0';
+  
+}
+
+function spawn(){
+  var top=stack[stack.length-1];
+  var spd=Math.min(2.8+score*0.1,10);
+  matIdx=(matIdx+1)%MATS.length;
+  // Alternate: come from left or right side
+  var fromRight=(Math.floor(score/1)%2===0);
+  var startX=fromRight? W+20 : -top.w-20;
+  var dir=fromRight?-1:1;
+  mov={x:startX, w:top.w, mat:MATS[matIdx], spd:spd, dir:dir, seed:Math.random()*100, slideIn:true};
+}
+
+/* ── Drop ── */
+function drop(){
+  if(!mov) return;
+  var top=stack[stack.length-1];
+
+  /* The moving block is visually at movScreenY() but its world X is mov.x.
+     Overlap is purely X-axis.                                          */
+  var nl=Math.max(mov.x,top.x);
+  var nr=Math.min(mov.x+mov.w, top.x+top.w);
+  var nw=nr-nl;
+
+  if(nw<=2){ die(); return; }
+
+  var perf=Math.abs(mov.x-top.x)<=7;
+  if(perf){ nl=top.x; nw=top.w; strk++; showCombo(); perfectFlash=18; flashPulse=8; }
+  else{ makeParts(mov,top); strk=0; }
+
+  stack.push({x:nl,w:nw,mat:mov.mat,seed:mov.seed});
+  score++;
+  document.getElementById('hud-score').textContent=score;
+  if(score>best){best=score; }
+
+  /* Mission progress */
+  updateMission();
+  if(score>=30){ winGame(); return; }
+
+  /* Camera: keep the NEW top of stack visible.
+     blockTop(i) = GROUND_Y - (i+1)*BH - camY
+     As tower grows up, blockTop decreases (goes toward top of screen).
+     We want the new stack top at desiredTopScreen from top.
+     So: GROUND_Y - (stack.length)*BH - tCam = desiredTopScreen
+         tCam = GROUND_Y - stack.length*BH - desiredTopScreen            */
+  var desiredTopScreen = TOPPAD + BH*2.2;
+  tCam = GROUND_Y - stack.length*BH - desiredTopScreen;
+
+  spawn();
+}
+
+/* ── Particles ── */
+function makeParts(m,top){
+  /* particles fly from chopped pieces */
+  var py=movScreenY()+BH/2;
+  function burst(x1,x2){
+    var n=Math.max(3,~~((x2-x1)/8));
+    for(var i=0;i<n;i++){
+      parts.push({
+        x:x1+Math.random()*(x2-x1), y:py,
+        vx:(Math.random()-.5)*8, vy:-Math.random()*10-3,
+        s:Math.random()*9+4, col:m.mat.face,
+        a:1, rot:Math.random()*6.28, rv:(Math.random()-.5)*.3
+      });
+    }
+  }
+  if(m.x<top.x) burst(m.x,top.x);
+  if(m.x+m.w>top.x+top.w) burst(top.x+top.w,m.x+m.w);
+}
+
+/* ── Combo ── */
+function showCombo(){
+  var msgs=['ТОЧНО!','ИДЕАЛЬНО! 🎯','СУПЕР! ⚡','ОГОНЬ! 🔥','МАСТЕР! 👑','ЛЕГЕНДА! 🏆'];
+  var el=document.getElementById('combo-span');
+  el.textContent=msgs[Math.min(strk-1,msgs.length-1)];
+  el.classList.remove('run'); void el.offsetWidth; el.classList.add('run');
+}
+
+/* ── Mission ── */
+var MISSION_GOAL = 30;
+var missionDone = false;
+
+function updateMission(){
+  var pct = Math.min(score / MISSION_GOAL * 100, 100);
+  document.getElementById('mission-fill').style.width = pct + '%';
+  document.getElementById('hud-score').childNodes[0].textContent = Math.min(score, MISSION_GOAL);
+  var pill = document.getElementById('goal-pill');
+  var num  = document.getElementById('hud-score');
+  var fill = document.getElementById('mission-fill');
+  if(score >= MISSION_GOAL){
+    fill.style.background     = '#FFD700';
+    pill.style.borderColor    = '#FFD700';
+    num.style.color           = '#FFD700';
+  } else if(score >= 20){
+    fill.style.background     = '#FFA500';
+    pill.style.borderColor    = '#FFA500';
+    num.style.color           = '#FFA500';
+  }
+}
+
+function calcBonus(sc){
+  // 500 base + 10 per perfect beyond 30, if applicable
+  return 500;
+}
+
+function spawnCoin(x, y){
+  var el = document.createElement('div');
+  el.className = 'coin-pop';
+  el.textContent = '+500 баллов 🪙';
+  el.style.left = (x-60) + 'px';
+  el.style.top  = y + 'px';
+  document.getElementById('wrap').appendChild(el);
+  setTimeout(function(){ el.remove(); }, 1000);
+}
+
+function winGame(){
+  mode = 'dead'; mov = null;
+  // Show mission badge momentarily
+  var badge = document.getElementById('mission-badge');
+  badge.classList.add('show');
+  // Coin pop
+  setTimeout(function(){
+    spawnCoin(W/2, H/2 - 40);
+  }, 300);
+  setTimeout(function(){
+    var bonus = calcBonus(score);
+    document.getElementById('win-score').textContent = score;
+    document.getElementById('win-coins').textContent = '+' + bonus;
+    document.getElementById('hint').style.display = 'none';
+    badge.classList.remove('show');
+    document.getElementById('scr-win').style.display = 'flex';
+    // Store bonus points (for site integration)
+    try{
+      var stored = parseInt(localStorage.getItem('brevna_bonus')||'0');
+      localStorage.setItem('brevna_bonus', stored + bonus);
+    }catch(e){}
+  }, 1200);
+}
+
+/* ── Die ── */
+function die(){
+  mode='dead'; mov=null;
+  setTimeout(function(){
+    document.getElementById('ov-score').textContent=score;
+    var ob=document.getElementById('ov-best');
+    ob.textContent=(score>=best&&score>0)?'🏆 НОВЫЙ РЕКОРД!':'Рекорд: '+best+' эт.';
+    document.getElementById('scr-over').style.display='flex';
+    document.getElementById('hint').style.display='none';
+  },400);
+}
+
+/* ═══════════════════════════════════════════
+   DRAW
+═══════════════════════════════════════════ */
+
+/* Sky + construction site background */
+function drawBg(){
+  /* Sky */
+  var sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#6AAFE6');
+  sky.addColorStop(1,'#B8D9F0');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+  /* Clouds */
+  drawCloud(50,40,60);
+  drawCloud(200,25,80);
+  drawCloud(310,55,50);
+
+  /* Silhouette buildings behind */
+  ctx.fillStyle='#A8C8E0';
+  var blds=[[10,H-160,55,160],[75,H-200,45,200],[130,H-130,60,130],
+            [280,H-180,50,180],[340,H-150,45,150]];
+  blds.forEach(function(b){
+    ctx.fillRect(b[0],b[1],b[2],b[3]);
+    // windows
+    ctx.fillStyle='rgba(255,255,255,0.25)';
+    for(var wy=b[1]+10;wy<b[1]+b[3]-20;wy+=22){
+      for(var wx=b[0]+8;wx<b[0]+b[2]-8;wx+=14){
+        ctx.fillRect(wx,wy,8,12);
+      }
+    }
+    ctx.fillStyle='#A8C8E0';
+  });
+
+  /* Crane left */
+  drawCrane(W*0.08, H-GROUND_Y+camY);
+}
+
+function drawCloud(x,y,r){
+  ctx.save(); ctx.globalAlpha=0.85;
+  ctx.fillStyle='#fff';
+  [[0,0,r],[r*.6,-r*.3,r*.7],[r*1.1,0,r*.8],[r*1.7,r*.1,r*.6]].forEach(function(p){
+    ctx.beginPath(); ctx.arc(x+p[0],y+p[1],p[2],0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawCrane(x, groundScreenY){
+  ctx.save();
+  ctx.strokeStyle='#E8A020'; ctx.lineWidth=5; ctx.lineCap='round';
+  var base=GROUND_Y-camY; // screen Y of ground
+  // vertical mast
+  ctx.beginPath(); ctx.moveTo(x+20,base); ctx.lineTo(x+20,base-280); ctx.stroke();
+  // horizontal arm
+  ctx.beginPath(); ctx.moveTo(x-10,base-270); ctx.lineTo(x+160,base-270); ctx.stroke();
+  // cable
+  ctx.strokeStyle='#555'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x+120,base-270); ctx.lineTo(x+120,base-180); ctx.stroke();
+  // hook
+  ctx.strokeStyle='#888'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(x+120,base-174,6,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+/* Ground */
+function drawGround(){
+  var gy=GROUND_Y-camY;
+  // dirt
+  ctx.fillStyle='#8B6914'; ctx.fillRect(0,gy,W,H-gy);
+  // concrete strip
+  ctx.fillStyle='#AAA'; ctx.fillRect(0,gy,W,16);
+  // road dashes
+  ctx.fillStyle='#FFD93D';
+  for(var x=10;x<W;x+=52) ctx.fillRect(x,gy+5,30,6);
+}
+
+/* Draw a stacked block */
+function drawStackBlock(bx,bw,screenY,mat,seed,alpha){
+  if(screenY>H+BH||screenY+BH<-10) return;
+  alpha=alpha===undefined?1:alpha;
+  ctx.save(); ctx.globalAlpha=alpha;
+
+  /* shadow under block */
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.fillRect(bx+4,screenY+BH-4,bw-4,8);
+
+  /* main face */
+  ctx.fillStyle=mat.face;
+  rr(bx,screenY,bw,BH,5); ctx.fill();
+
+  /* top shine strip */
+  ctx.fillStyle=mat.shine;
+  rr(bx,screenY,bw,BH*.38,5); ctx.fill();
+
+  /* bottom shadow strip */
+  ctx.fillStyle=mat.shadow;
+  ctx.fillRect(bx,screenY+BH*.72,bw,BH*.28);
+  /* round corners bottom */
+  rr(bx,screenY,bw,BH,5); ctx.clip();
+  ctx.fillRect(bx,screenY+BH*.72,bw,BH*.28);
+
+  ctx.restore(); ctx.save(); ctx.globalAlpha=alpha;
+
+  /* Brick mortar lines (for brick/stone mats) */
+  if(mat.mortar){
+    ctx.strokeStyle=mat.mortar; ctx.lineWidth=1.5;
+    ctx.save();
+    rr(bx,screenY,bw,BH,5); ctx.clip();
+    /* horizontal mortar */
+    ctx.beginPath(); ctx.moveTo(bx,screenY+BH/2); ctx.lineTo(bx+bw,screenY+BH/2); ctx.stroke();
+    /* vertical mortar staggered */
+    var off=(seed%2===0)?0:bw/4;
+    for(var mx=bx+off;mx<bx+bw;mx+=bw/3){
+      ctx.beginPath(); ctx.moveTo(mx,screenY); ctx.lineTo(mx,screenY+BH/2); ctx.stroke();
+    }
+    for(var mx2=bx+bw/6+(seed%3)*8;mx2<bx+bw;mx2+=bw/3){
+      ctx.beginPath(); ctx.moveTo(mx2,screenY+BH/2); ctx.lineTo(mx2,screenY+BH); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* outline */
+  ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=2;
+  rr(bx,screenY,bw,BH,5); ctx.stroke();
+
+  ctx.restore();
+}
+
+/* Moving block */
+function drawMov(){
+  if(!mov) return;
+  var sy=movScreenY();
+
+  /* Danger X-axis overlap hint */
+  var top=stack[stack.length-1];
+  var ow=Math.min(mov.x+mov.w,top.x+top.w)-Math.max(mov.x,top.x);
+  var pct=ow/top.w;
+
+  /* dashed guide line from moving block down to stack top */
+  var topStackY=blockTop(stack.length-1);
+  ctx.save();
+  ctx.strokeStyle='rgba(255,255,255,0.25)';
+  ctx.lineWidth=1; ctx.setLineDash([4,6]);
+  ctx.beginPath(); ctx.moveTo(mov.x+mov.w/2,sy+BH); ctx.lineTo(mov.x+mov.w/2,topStackY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  /* danger flash overlay */
+  if(pct>0&&pct<.35){
+    ctx.fillStyle='rgba(255,50,50,'+(.12*(1-pct/.35))+')';
+    ctx.fillRect(0,0,W,H);
+  }
+
+  drawStackBlock(mov.x,mov.w,sy,mov.mat,mov.seed);
+}
+
+/* Particles */
+function drawParts(){
+  for(var i=parts.length-1;i>=0;i--){
+    var p=parts[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=.45;
+    p.a-=.025; p.rot+=p.rv;
+    if(p.a<=0){parts.splice(i,1);continue;}
+    ctx.save(); ctx.globalAlpha=p.a;
+    ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    ctx.fillStyle=p.col;
+    rr(-p.s/2,-p.s*.35,p.s,p.s*.7,2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ── Main loop ── */
+var last=0;
+function loop(ts){
+  var dt=Math.min((ts-last)/16.67,2.5); last=ts;
+
+  /* smooth camera */
+  camY+=(tCam-camY)*.09;
+
+  /* screen shake on perfect */
+  var shakeX=0,shakeY=0;
+  if(flashPulse>0){
+    flashPulse--;
+    shakeX=(Math.random()-.5)*4*(flashPulse/8);
+    shakeY=(Math.random()-.5)*3*(flashPulse/8);
+  }
+
+  /* move sliding block with slide-in bounce */
+  if(mode==='play'&&mov){
+    if(mov.slideIn){
+      // slide in from side until block is fully on screen
+      mov.x+=mov.spd*mov.dir*dt*2.5;
+      var onScreen=(mov.dir>0)?(mov.x>-mov.w*0.1):(mov.x+mov.w<W+mov.w*0.1);
+      if(onScreen) mov.slideIn=false;
+    } else {
+      mov.x+=mov.spd*mov.dir*dt;
+      if(mov.x+mov.w>W+18) mov.dir=-1;
+      if(mov.x<-18) mov.dir=1;
+    }
+  }
+
+  ctx.save();
+  if(flashPulse>0) ctx.translate(shakeX,shakeY);
+  ctx.clearRect(-10,-10,W+20,H+20);
+  ctx.restore();
+  ctx.save();
+  if(flashPulse>0) ctx.translate(shakeX,shakeY);
+  drawBg();
+  drawGround();
+
+  /* draw stack */
+  for(var i=0;i<stack.length;i++){
+    drawStackBlock(stack[i].x,stack[i].w, blockTop(i), stack[i].mat, stack[i].seed||0);
+  }
+
+  if(mode==='play') drawMov();
+  drawParts();
+  ctx.restore();
+
+  /* perfect flash white overlay */
+  if(perfectFlash>0){
+    perfectFlash--;
+    var a=(perfectFlash/18)*0.35;
+    ctx.fillStyle='rgba(255,255,220,'+a+')';
+    ctx.fillRect(0,0,W,H);
+  }
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ── INPUT ── */
+function tapDrop(){ if(mode==='play') drop(); }
+
+c.addEventListener('click', tapDrop);
+c.addEventListener('touchend',function(e){e.preventDefault();tapDrop();},{passive:false});
+document.addEventListener('keydown',function(e){
+  if(e.code==='Space'||e.code==='ArrowDown'){e.preventDefault();tapDrop();}
+});
+
+function startGame(){
+  document.getElementById('scr-start').style.display='none';
+  document.getElementById('scr-win').style.display='none';
+  document.getElementById('hint').style.display='block';
+  document.getElementById('mission-badge').classList.remove('show');
+  // Reset mission colors
+  document.getElementById('mission-fill').style.background='#4CAF50';
+  document.getElementById('goal-pill').style.borderColor='#4CAF50';
+  document.getElementById('hud-score').style.color='#4CAF50';
+  mode='play'; init();
+}
+function retryGame(){
+  document.getElementById('scr-over').style.display='none';
+  document.getElementById('hint').style.display='block';
+  document.getElementById('mission-badge').classList.remove('show');
+  document.getElementById('mission-fill').style.background='#4CAF50';
+  document.getElementById('goal-pill').style.borderColor='#4CAF50';
+  document.getElementById('hud-score').style.color='#4CAF50';
+  mode='play'; init();
+}
+function winRetryGame(){
+  document.getElementById('scr-win').style.display='none';
+  document.getElementById('hint').style.display='block';
+  document.getElementById('mission-badge').classList.remove('show');
+  document.getElementById('mission-fill').style.background='#4CAF50';
+  document.getElementById('goal-pill').style.borderColor='#4CAF50';
+  document.getElementById('hud-score').style.color='#4CAF50';
+  mode='play'; init();
+}
+
+var bs=document.getElementById('btn-start');
+var br=document.getElementById('btn-retry');
+var bw=document.getElementById('btn-win-retry');
+['click','touchend'].forEach(function(ev){
+  bs.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();startGame();});
+  br.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();retryGame();});
+  bw.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();winRetryGame();});
+});
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+/* Контейнеры центрирования */
+.auth-container, .profile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 20px;
+    background-color: #fcfcfc; /* Светлый фон как в каталоге */
+}
+
+/* Карточки */
+.auth-card, .profile-card {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 15px; /* Мягкие углы как у карточек товаров */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    border: 1px solid #eee;
+}
+
+/* Заголовки */
+.auth-card h2, .profile-card h1 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+/* Поля ввода */
+.auth-card input {
+    width: 100%;
+    padding: 14px 18px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    outline: none;
+    box-sizing: border-box; /* Чтобы паддинги не раздували инпут */
+}
+
+.auth-card input:focus {
+    border-color: #2c3e50;
+}
+
+/* Кнопки */
+.btn-auth, .btn-logout {
+    width: 100%;
+    padding: 14px;
+    background-color: #2c3e50; /* Темный стиль кнопок */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.btn-auth:hover, .btn-logout:hover {
+    background-color: #34495e;
+    transform: translateY(-2px);
+}
+
+.btn-logout {
+    background-color: #ca5252; /* Красный для выхода */
+}
+
+.btn-logout:hover {
+    background-color: #b34545;
+}
+
+/* Аватар в профиле */
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    background: #e0e0e0;
+    color: #2c3e50;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px;
+    font-size: 30px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Текст переключения */
+.toggle-auth {
+    margin-top: 20px;
+    color: #7f8c8d;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+.toggle-auth:hover {
+    color: #2c3e50;
+}
+
+/* Инфо текст */
+.profile-card p {
+    color: #7f8c8d;
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.profile-card b {
+    color: #2c3e50;
+}

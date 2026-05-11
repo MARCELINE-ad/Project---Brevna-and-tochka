@@ -3,14 +3,19 @@ import Item from './Item.js';
 
 export class Items extends Component {
   render() {
-    console.log('Items:', this.props.addToOrder)
+    // Деструктурируем все нужные пропсы для удобства
+    const { items, addToOrder, orders, onIncrease, onDecrease } = this.props;
+
     return (
         <main>
-            {this.props.items.map(el => (
+            {items.map(el => (
               <Item 
                 key={el.id} 
                 item={el} 
-                addToOrder={this.props.addToOrder} // ПРОВЕРЬ: имя должно быть именно таким!
+                addToOrder={addToOrder} 
+                orders={orders}          // ПЕРЕДАЕМ КОРЗИНУ
+                onIncrease={onIncrease}  // ПЕРЕДАЕМ ПЛЮС
+                onDecrease={onDecrease}  // ПЕРЕДАЕМ МИНУС
               />
             ))}
         </main>
