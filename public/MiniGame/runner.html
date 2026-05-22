@@ -156,9 +156,9 @@ body {
   <!-- Стартовый экран -->
   <div class="scr" id="scr-start">
     <div class="scr-logo">CITY<br><span>RUNNER</span></div>
-    <div class="scr-sub">🚛 ДОСТАВЬ БРЁВНА — ПРОЕДЬ 500 М!</div>
+    <div class="scr-sub">🚛 ОБЪЕЗЖАЙ ТРАФИК — ДОЕДЬ 2000 М!</div>
     <button class="playbtn" id="btn-start">ПОЕХАЛИ!</button>
-    <a class="backbtn" href="javascript:history.back()">🏠 НА САЙТ</a>
+    <a class="backbtn" href="/">🏠 НА САЙТ</a>
   </div>
 
   <!-- Экран game over -->
@@ -170,7 +170,7 @@ body {
     </div>
     <div class="sbox-best" id="ov-best"></div>
     <button class="playbtn" id="btn-retry">ЕЩЁ РАЗ!</button>
-    <a class="backbtn" href="/">🏠 НА САЙТ</a>
+    <a class="backbtn" href="javascript:history.back()">🏠 НА САЙТ</a>
   </div>
 </div>
 <script>
@@ -215,14 +215,17 @@ function initLayout() {
 let state = 'start';
 let score = 0;
 let record = parseInt(localStorage.getItem('brevna_record') || '0');
-let speed = 0, baseSpeed = 3.2, speedKmh = 0;
-const GOAL_METERS = 500;
+let speed = 0, baseSpeed = 5.0, speedKmh = 0;
+const GOAL_METERS = 2000;
 let bonusPoints = 0; // баллы за эту попытку
 let goalReached = false;
-let fuel = 1.0, fuelDrain = 0.00038;
+let fuel = 1.0, fuelDrain = 0.00052;
 let frameCount = 0, soundOn = true;
 let roadOffset = 0;
 let obstacles = [], bonuses = [], trees = [], particles = [], toasts = [];
+// Волновой спавн: очередь волн, каждая волна = массив {lane, delay}
+let waveQueue = [];   // очередь машин к спавну: [{lane, spawnFrame}, ...]
+let nextWaveFrame = 0; // кадр следующей волны
 
 // ─── PLAYER ──────────────────────────────────────────────────────────────────
 let player = {
@@ -236,6 +239,7 @@ let player = {
   tiltAngle: 0,
   trailerTiltAngle: 0,
   impactShake: 0,
+  wheelAngle: 0,
 };
 let keys = {}, laneChangeCooldown = 0;
 
@@ -358,9 +362,10 @@ function rRect(x, y, w, h, r, fill, stroke) {
 }
 
 // ─── SPRITES ─────────────────────────────────────────────────────────────────
-function drawTruck(cabX, trailerX, cy, s, cabAngle, trailerAngle) {
+function drawTruck(cabX, trailerX, cy, s, cabAngle, trailerAngle, wheelAngle) {
   const cx = (cabX + trailerX) * 0.5;
   const angle = cabAngle || 0;
+  const wAngle = wheelAngle || 0;
 
   const cabH  = s * 2.6;
   const boxH  = s * 5.0;
@@ -372,21 +377,45 @@ function drawTruck(cabX, trailerX, cy, s, cabAngle, trailerAngle) {
   ctx.rotate(angle);
 
   // Машина едет ВВЕРХ: перед (кабина с фарами) = TOP экрана = отрицательный Y
-  // cabFront = верхний край кабины (передний бампер, фары)
-  const cabFront = -totalH * 0.5;          // передний бампер вверху
-  const cabBack  = cabFront + cabH;         // граница кабина/кузов
-  const boxBack  = cabBack + boxH;          // задний борт кузова (внизу)
+  const cabFront = -totalH * 0.5;
+  const cabBack  = cabFront + cabH;
+  const boxBack  = cabBack + boxH;
 
-  // ── Колёса ──
+  // ── Задние колёса (статичные двойные) ──
   ctx.fillStyle = '#1a1a1a';
-  // Передние (вверху — у кабины)
-  ctx.fillRect(-bodyW*0.5 - s*0.36, cabFront + s*0.8, s*0.36, s*0.9);
-  ctx.fillRect( bodyW*0.5 + s*0.00, cabFront + s*0.8, s*0.36, s*0.9);
-  // Задние двойные (внизу — у кузова)
-  ctx.fillRect(-bodyW*0.5 - s*0.40, cabBack + boxH - s*1.9, s*0.38, s*0.85);
+  ctx.fillRect(-bodyW*0.5 - s*0.40, cabBack + boxH - s*1.9,  s*0.38, s*0.85);
   ctx.fillRect(-bodyW*0.5 - s*0.40, cabBack + boxH - s*1.05, s*0.38, s*0.85);
-  ctx.fillRect( bodyW*0.5 + s*0.02, cabBack + boxH - s*1.9, s*0.38, s*0.85);
+  ctx.fillRect( bodyW*0.5 + s*0.02, cabBack + boxH - s*1.9,  s*0.38, s*0.85);
   ctx.fillRect( bodyW*0.5 + s*0.02, cabBack + boxH - s*1.05, s*0.38, s*0.85);
+  // Блик на задних колёсах
+  ctx.fillStyle = '#333';
+  ctx.fillRect(-bodyW*0.5 - s*0.36, cabBack + boxH - s*1.88, s*0.12, s*0.80);
+  ctx.fillRect( bodyW*0.5 + s*0.04, cabBack + boxH - s*1.88, s*0.12, s*0.80);
+
+  // ── Передние колёса (с поворотом) ──
+  const wW = s*0.36, wH = s*0.92;
+  // Центры колёс
+  const wLX = -bodyW*0.5 - wW*0.5 - s*0.02;
+  const wRX =  bodyW*0.5 + wW*0.5 + s*0.02;
+  const wY  = cabFront + s*0.8 + wH*0.5;
+
+  function drawFrontWheel(wx, wy) {
+    ctx.save();
+    ctx.translate(wx, wy);
+    ctx.rotate(wAngle);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-wW*0.5, -wH*0.5, wW, wH);
+    // Блик
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-wW*0.5 + s*0.04, -wH*0.5 + s*0.06, s*0.10, wH - s*0.12);
+    // Диск (маленький прямоугольник по центру)
+    ctx.fillStyle = '#555';
+    ctx.fillRect(-wW*0.18, -wH*0.22, wW*0.36, wH*0.44);
+    ctx.restore();
+  }
+
+  drawFrontWheel(wLX, wY);
+  drawFrontWheel(wRX, wY);
 
   // ── Кабина (вверху = ПЕРЕД) ──
   ctx.fillStyle = '#c0392b';
@@ -588,12 +617,13 @@ function initGame() {
   resize();
   speed = baseSpeed; score = 0; fuel = 1.0; frameCount = 0;
   obstacles = []; bonuses = []; particles = []; toasts = []; roadOffset = 0;
+  waveQueue = []; nextWaveFrame = 60;
   laneChangeCooldown = 0;
   player.w = Math.floor(LANE_W * 0.58);
   player.h = Math.floor(player.w * 3.2);
   player.lane = 1;
   player.x = player.targetX = player.renderX = LANE_CENTERS[1];
-  player.velX = player.sway = player.swayAngle = player.tiltAngle = player.trailerTiltAngle = player.impactShake = 0;
+  player.velX = player.sway = player.swayAngle = player.tiltAngle = player.trailerTiltAngle = player.impactShake = player.wheelAngle = 0;
   player.cabX = player.trailerX = LANE_CENTERS[player.lane];
   player.cabVelX = player.trailerVelX = 0;
   player.cabRenderX = player.trailerRenderX = player.cabX;
@@ -647,47 +677,68 @@ function getEscapeRoutes() {
   return safe; // полосы, в которые можно безопасно выехать
 }
 
-function spawnObstacle() {
-  const s = Math.floor(LANE_W * 0.18);
-  const spawnY = -player.h * 1.2;
+// Генерирует следующую волну и кладёт машины в очередь
+function scheduleWave() {
+  const waveInterval = Math.max(90, 180 - score * 0.04);
 
-  // Полосы уже занятые у зоны спавна
-  const nearBlocked = getLanesBlockedInRange(spawnY - player.h * 2, spawnY + player.h);
+  // Скорость всей волны фиксируется здесь — все машины волны едут одинаково
+  const waveSpeed = speed * (0.10 + Math.random() * 0.18);
 
-  // Полосы, свободные у спавна — кандидаты
-  let candidates = [0, 1, 2].filter(l => !nearBlocked.has(l));
-  if (candidates.length === 0) return; // дорога забита у спавна
+  const r = Math.random();
+  let pattern;
 
-  // Текущие безопасные маршруты для игрока
-  const escapeNow = getEscapeRoutes();
-
-  // Фильтруем кандидатов: не закрываем последний путь к спасению
-  // Симулируем: если мы заспавним машину на lane X, останется ли выход?
-  const safe = candidates.filter(lane => {
-    // После спавна на этой полосе, сколько маршрутов останется?
-    // Считаем escape routes без учёта этого спавна, но убирая эту полосу
-    const remainingEscape = new Set(escapeNow);
-    remainingEscape.delete(lane);
-    // Разрешаем если останется хотя бы 1 маршрут, ИЛИ если сейчас маршрутов нет вообще
-    return remainingEscape.size > 0 || escapeNow.size === 0;
-  });
-
-  const pool = safe.length > 0 ? safe : candidates;
-  const lane = pool[(Math.random() * pool.length) | 0];
-
-  // Вариативность скоростей
-  const speedVariant = Math.random();
-  let carSpeed;
-  if (speedVariant < 0.25) {
-    carSpeed = speed * 0.06;
-  } else if (speedVariant < 0.65) {
-    carSpeed = speed * 0.16;
+  if (r < 0.45) {
+    // Одиночная
+    const lane = (Math.random() * 3) | 0;
+    pattern = [{ lane, offset: 0 }];
+  } else if (r < 0.85) {
+    // Двойная — 2 полосы заняты, одна свободна
+    const lanes = [0, 1, 2];
+    lanes.splice((Math.random() * 3) | 0, 1);
+    const shift = Math.floor(15 + Math.random() * 25);
+    pattern = [
+      { lane: lanes[0], offset: 0 },
+      { lane: lanes[1], offset: shift },
+    ];
   } else {
-    carSpeed = speed * 0.26;
+    // Тройная зигзагом — редко
+    const shift = Math.floor(30 + Math.random() * 20);
+    pattern = [
+      { lane: 0, offset: 0 },
+      { lane: 2, offset: shift },
+      { lane: 1, offset: shift * 2 },
+    ];
   }
 
-  const laneWobble = (Math.random() - 0.5) * LANE_W * 0.1;
+  for (const { lane, offset } of pattern) {
+    waveQueue.push({ lane, spawnFrame: nextWaveFrame + offset, waveSpeed });
+  }
 
+  nextWaveFrame += waveInterval;
+}
+
+function spawnObstacle() {
+  const s = Math.floor(LANE_W * 0.18);
+  const spawnY = -player.h * 1.4;
+
+  const speedVariant = Math.random();
+  let carSpeed;
+  if (speedVariant < 0.30) {
+    carSpeed = speed * 0.10;
+  } else if (speedVariant < 0.75) {
+    carSpeed = speed * 0.22;
+  } else {
+    carSpeed = speed * 0.42;
+  }
+
+  // Все машины одной волны едут с одинаковой скоростью — не догоняют друг друга
+  return { s, spawnY, carSpeed };
+}
+
+function doSpawnCar(lane, carSpeed) {
+  const s = Math.floor(LANE_W * 0.18);
+  const spawnY = -player.h * 1.4;
+  const laneWobble = (Math.random() - 0.5) * LANE_W * 0.08;
   obstacles.push({
     lane,
     x: LANE_CENTERS[lane] + laneWobble,
@@ -697,7 +748,7 @@ function spawnObstacle() {
     speed: carSpeed,
     laneWobble,
     wobblePhase: Math.random() * Math.PI * 2,
-    wobbleAmp: Math.random() < 0.15 ? LANE_W * 0.05 : 0,
+    wobbleAmp: 0,
   });
 }
 
@@ -714,19 +765,20 @@ function addToast(text, color) {
 function update() {
   if (state !== 'playing') return;
   frameCount++;
-  speed    = baseSpeed + frameCount * 0.0002 + score * 0.0012;
+  speed    = baseSpeed + frameCount * 0.0006 + score * 0.002;
   speedKmh = Math.floor(speed * 18);
-  score   += speed * 0.06;
+  score   += speed * 0.07;
   // Проверка достижения цели 500 м
   if (!goalReached && Math.floor(score) >= GOAL_METERS) {
     goalReached = true;
-    // Баллы: базовые 100 + бонус за топливо (до 80) + бонус за скорость (до 70)
-    const fuelBonus  = Math.floor(fuel * 80);
-    const speedBonus = Math.floor(Math.min(1, (speed - baseSpeed) / 4) * 70);
-    bonusPoints = 100 + fuelBonus + speedBonus;
-    addToast('🎉 +' + bonusPoints + ' баллов!', '#ffcc44');
+    // Ровно 500 баллов за доезд до 2000м
+    const fuelBonus  = 0;
+    const speedBonus = 0;
+    bonusPoints = 500;
+    addToast('🏆 +' + bonusPoints + ' баллов!', '#ffcc44');
     // Сообщаем сайту о победе
     try {
+      try { var s=parseInt(localStorage.getItem('brevna_bonus')||'0'); localStorage.setItem('brevna_bonus', s+bonusPoints); } catch(e){}
       window.parent.postMessage({
         type: 'BREVNA_GOAL_REACHED',
         points: bonusPoints,
@@ -737,7 +789,7 @@ function update() {
   }
   fuel    -= fuelDrain * (1 + speed*0.02);
   if (fuel <= 0) { fuel=0; triggerGameOver(); return; }
-  roadOffset = (roadOffset + speed*3.5) % 60;
+  roadOffset = (roadOffset + speed*5.0) % 60;
 
   // ── Управление: инерционный поворот как у грузовика ──
 
@@ -765,6 +817,10 @@ function update() {
   player.tiltAngle = Math.atan2(player.cabX - hitchX, hitchDY) * 0.55;
   player.tiltAngle = Math.max(-0.18, Math.min(0.18, player.tiltAngle));
 
+  // Угол поворота передних колёс — из скорости перестроения
+  const targetWheelAngle = Math.max(-0.55, Math.min(0.55, player.cabVelX * 0.45));
+  player.wheelAngle = player.wheelAngle * 0.80 + targetWheelAngle * 0.20;
+
   // Угол прицепа — аналогично, но прицеп тянется к шкворню
   const trailerDY = player.h * 0.65;
   player.trailerTiltAngle = Math.atan2(player.trailerX - hitchX, trailerDY) * 0.25;
@@ -777,8 +833,8 @@ function update() {
   player.trailerX = Math.max(_minX, Math.min(_maxX, player.trailerX));
 
   // Дорожная вибрация (усиливается со скоростью)
-  const wobbleAmp = Math.max(0, (speed - 3.5) * 0.18);
-  player.swayAngle += 0.14 + speed * 0.006;
+  const wobbleAmp = Math.max(0, (speed - 4.0) * 0.22);
+  player.swayAngle += 0.16 + speed * 0.008;
   player.sway = Math.sin(player.swayAngle) * wobbleAmp;
 
   if (Math.abs(player.impactShake) > 0.1) player.impactShake *= 0.68;
@@ -799,8 +855,14 @@ function update() {
     laneChangeCooldown = 22;
   }
 
-  const spawnInt = Math.max(60, 160 - frameCount * 0.025);
-  if (frameCount % Math.floor(spawnInt) === 0) spawnObstacle();
+  // Волновой спавн
+  if (frameCount >= nextWaveFrame) scheduleWave();
+  for (let i = waveQueue.length - 1; i >= 0; i--) {
+    if (frameCount >= waveQueue[i].spawnFrame) {
+      doSpawnCar(waveQueue[i].lane, waveQueue[i].waveSpeed);
+      waveQueue.splice(i, 1);
+    }
+  }
   
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
@@ -823,7 +885,7 @@ function update() {
   }
 
   // Бонусы
-  if (frameCount % 175 === 0) spawnBonus();
+  if (frameCount % 140 === 0) spawnBonus();
   for (let i=bonuses.length-1; i>=0; i--) {
     const b=bonuses[i];
     b.y += speed;
@@ -837,7 +899,7 @@ function update() {
   }
 
   // Деревья
-  for (let i=trees.length-1; i>=0; i--) { trees[i].y += speed*1.5; if (trees[i].y > H+130) trees.splice(i,1); }
+  for (let i=trees.length-1; i>=0; i--) { trees[i].y += speed*2.2; if (trees[i].y > H+130) trees.splice(i,1); }
   if (trees.length < 20) spawnTree();
 
   // Частицы
@@ -891,7 +953,17 @@ function render() {
   if (state==='start')    { drawStart(); return; }
   if (state==='gameover') { drawGameOver(); return; }
   drawRoad(); drawTrees(); drawBonuses(); drawObstacles();
-  drawPlayerTruck(); drawParticles(); drawToasts(); drawUI();
+  drawPlayerTruck(); drawParticles(); drawToasts();
+  // Тоннельный эффект при высокой скорости
+  if (speed > 7) {
+    const intensity = Math.min(0.55, (speed - 7) * 0.06);
+    const grad = ctx.createRadialGradient(W/2, H/2, H*0.25, W/2, H/2, H*0.85);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(0,0,0,${intensity.toFixed(2)})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+  drawUI();
   if (state==='paused') drawPause();
 }
 
@@ -923,7 +995,8 @@ function drawPlayerTruck() {
     player.y,
     Math.floor(player.w / 3.2),
     player.tiltAngle,
-    player.trailerTiltAngle
+    player.trailerTiltAngle,
+    player.wheelAngle
   );
 }
 
@@ -1019,7 +1092,7 @@ function drawUI() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 5;
-    ctx.fillText('★ ЦЕЛЬ ДОСТИГНУТА! +' + bonusPoints + ' баллов', W / 2, H * 0.055);
+    ctx.fillText('🏆 ЦЕЛЬ ДОСТИГНУТА! +' + bonusPoints + ' баллов', W / 2, H * 0.055);
     ctx.restore();
   }
 

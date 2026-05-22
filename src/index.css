@@ -228,7 +228,16 @@ header hr{
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    cursor: pointer;
+}
+.BonusAd {
+  position: relative; /* Контейнер становится точкой отсчета */
+  display: inline-block; /* Чтобы контейнер был по размеру картинки */
+}
+
+.BonusAd img {
+  display: block;
+  max-width: 100%; /* Чтобы картинка была адаптивной */
+  height: auto;
 }
 
 footer{
@@ -521,4 +530,16 @@ input[type="search"]::-webkit-search-cancel-button {
     font-weight: 800;
     font-size: 16px;
     color: #165536;
+}
+
+.text-overlay {
+  position: absolute; /* Текст «летает» поверх содержимого контейнера */
+  top: 50%;           /* Центрируем по вертикали */
+  left: 30%;          /* Центрируем по горизонтали */
+  transform: translate(-50%, -50%); /* Точная центровка */
+  font-size:22px;
+  color: #000;
+  padding: 10px 20px;
+  font-family: sans-serif;
+  pointer-events: none; /* Чтобы текст не мешал кликать по картинке */
 }

@@ -31,6 +31,7 @@ class App extends React.Component {
     this.handleAuth = this.handleAuth.bind(this)
     this.handleLogout = this.handleLogout.bind(this)
     this.handleSearch = this.handleSearch.bind(this) 
+    this.updateGlobalUser = this.updateGlobalUser.bind(this) // Привязываем новый метод
   }
 
   // --- ЛОГИКА ПОИСКА ---
@@ -48,7 +49,7 @@ class App extends React.Component {
     return filtered; 
   }
 
-  // --- ЛОГИКА АВТОРИЗАЦИИ ---
+  // --- ЛОГИКА АВТОРИЗАЦИИ И ОБНОВЛЕНИЯ ПРОФИЛЯ ---
   handleAuth(userData) {
     this.setState({ user: userData })
     localStorage.setItem('currentUser', JSON.stringify(userData))
@@ -57,6 +58,15 @@ class App extends React.Component {
   handleLogout() {
     this.setState({ user: null })
     localStorage.removeItem('currentUser')
+  }
+
+  // Новый метод для динамического обновления данных (имя, адрес, аватарка, телефон)
+  updateGlobalUser(updatedData) {
+    this.setState(prevState => {
+      const newUser = { ...prevState.user, ...updatedData };
+      localStorage.setItem('currentUser', JSON.stringify(newUser)); // Сохраняем в localStorage, чтобы данные не стёрлись
+      return { user: newUser };
+    });
   }
 
   // --- ЛОГИКА КАТАЛОГА ---
@@ -108,7 +118,6 @@ class App extends React.Component {
     })
   }
 
-  // ОБНОВЛЕННЫЙ МЕТОД: УДАЛЯЕТ ТОВАР ПРИ quantity = 1
   decreaseQuantity(id) {
     const itemInOrder = this.state.orders.find(el => el.id === id);
 
@@ -119,7 +128,6 @@ class App extends React.Component {
         )
       });
     } else {
-      // Если осталась 1 шт — удаляем товар совсем
       this.deleteOrder(id);
     }
   }
@@ -180,6 +188,7 @@ class App extends React.Component {
             <Route path="/ShoppingCard" element={
               <ShoppingCard 
                 orders={this.state.orders} 
+                user={this.state.user} // ПЕРЕДАЕМ USERА: теперь корзина знает адрес и телефон
                 onDelete={this.deleteOrder}
                 onIncrease={this.increaseQuantity}
                 onDecrease={this.decreaseQuantity}
@@ -190,8 +199,14 @@ class App extends React.Component {
             <Route path="/Profil" element={
               <Profil 
                 user={this.state.user} 
+                items={this.state.items}     // <--- НАПРАВЛЯЕМ СЮДА НАСТОЯЩИЕ ТОВАРЫ КАТАЛОГА
+                orders={this.state.orders} 
+                addToOrder={this.addToOrder} 
+                onIncrease={this.increaseQuantity} 
+                onDecrease={this.decreaseQuantity} 
                 onAuth={this.handleAuth} 
                 onLogout={this.handleLogout} 
+                updateGlobalUser={this.updateGlobalUser} 
               />
             } />
 

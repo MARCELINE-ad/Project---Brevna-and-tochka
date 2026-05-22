@@ -130,7 +130,7 @@
 }
 
 .filter-group label:hover {
-    color: #1a3c34; /* Твой фирменный зеленый */
+    color: #1a3c34; 
 }
 
 .filter-group input[type="checkbox"] {
@@ -195,12 +195,12 @@
 }
 
 .item-link {
-    text-decoration: none; /* Убирает подчеркивание */
-    color: inherit;        /* Оставляет цвет текста как был */
+    text-decoration: none; 
+    color: inherit;        
     display: block;
 }
 
 .item-link:hover h2 {
-    color: #1a3c34;        /* Можно добавить эффект при наведении на название */
+    color: #1a3c34;        
 }
 

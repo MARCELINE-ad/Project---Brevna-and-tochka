@@ -276,3 +276,78 @@
   cursor: not-allowed;
   transform: none;
 }
+
+/* ===== ДОПОЛНЕНИЯ ДЛЯ СТРОКИ ПРОМОКОДА И ФОРМЫ КУПОНОВ ===== */
+
+/* Выделение строки скидки в общем чеке */
+.summary-row.promo-row-highlight {
+  color: #2b7551 !important;
+  font-weight: 600;
+}
+
+/* Карточка ввода под основным чеком */
+.promo-input-card {
+  margin-top: 16px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.promo-input-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212529;
+}
+
+/* Компоненты формы купона */
+.cart-promo-form {
+  display: flex;
+  gap: 8px;
+}
+
+.cart-promo-input {
+  flex-grow: 1;
+  background-color: #f1f3f5;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.cart-promo-input:focus {
+  border-color: #2b7551;
+}
+
+.cart-promo-btn {
+  background-color: #e2e2e2;
+  color: #212529;
+  border: none;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cart-promo-btn:hover {
+  background-color: #d6d6d6;
+}
+
+/* Статус-сообщения валидации промокода */
+.promo-status-msg {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.promo-status-msg.error {
+  color: #dc3545;
+}
+
+.promo-status-msg.success {
+  color: #2b7551;
+}

@@ -10,7 +10,7 @@ import addblock from '../img/addblock.PNG'
 import addblock2 from '../img/addblock2.PNG'
 import addblock3 from '../img/addblock3.PNG'
 import Arrow from '../img/Arrow.png'
-import BonusAd from '../img/BonusAd.png'
+import BonusAd from '../img/BonusAd.jpeg'
 import BonusWheel from '../img/BonusWheel.png'
 import CityRunner from '../img/CityRunner.png'
 import TowerBuilder from '../img/TowerBuilder.png'
@@ -28,7 +28,24 @@ const NextArrow = ({ onClick }) => (
 );
 
 export default class HomePages extends Component {
+    // 1. Инициализируем состояние баланса
+    state = {
+        balance: 0
+    }
+
+    // 2. Считываем баланс из localStorage при монтировании компонента
+    componentDidMount() {
+        const savedBalance = localStorage.getItem('user_balance');
+        if (savedBalance !== null) {
+            this.setState({ balance: parseInt(savedBalance, 10) });
+        } else {
+            // Если баланса еще нет в базе, ставим стартовые 350 баллов
+            localStorage.setItem('user_balance', 350);
+            this.setState({ balance: 350 });
+        }
+    }
     render() {
+        
         const settings = {
             prevArrow: <PrevArrow />,
             nextArrow: <NextArrow />,
@@ -53,10 +70,11 @@ export default class HomePages extends Component {
 
                 {/* Сетка баннеров */}
                 <div className="promo-grid">
-                    <div className="BonusAd" onClick={() => window.open('https://youtube.com', '_blank')}>
-                        <img src={BonusAd} alt="Bonus Ad" />
+                    <div className="BonusAd">
+                        <img src={BonusAd} alt="Bonus Ad"/>
+                        <div className='text-overlay'>{this.state.balance} Баллов</div>
                     </div>
-                    <div className="BonusWheel" onClick={() => window.open('https://youtube.com', '_blank')}>
+                    <div className="BonusWheel" onClick={() => window.open('/MiniGame/bonus-roulette.html')}>
                         <img src={BonusWheel} alt="Bonus Wheel" />
                     </div>
                     <div className="CityRunner" onClick={() => window.location.href = '/MiniGame/runner.html'}>
