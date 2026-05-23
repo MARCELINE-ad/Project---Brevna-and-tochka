@@ -55,7 +55,7 @@
 **Общая длительность проекта:** 16 недель
 
 <div align="center">
-  <img src="./images/RoadMap.jpg" />
+  <img src="./public/img/RoadMap.jpg" />
 </div>
 
 
