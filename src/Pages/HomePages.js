@@ -28,24 +28,7 @@ const NextArrow = ({ onClick }) => (
 );
 
 export default class HomePages extends Component {
-    // 1. Инициализируем состояние баланса
-    state = {
-        balance: 0
-    }
-
-    // 2. Считываем баланс из localStorage при монтировании компонента
-    componentDidMount() {
-        const savedBalance = localStorage.getItem('user_balance');
-        if (savedBalance !== null) {
-            this.setState({ balance: parseInt(savedBalance, 10) });
-        } else {
-            // Если баланса еще нет в базе, ставим стартовые 350 баллов
-            localStorage.setItem('user_balance', 350);
-            this.setState({ balance: 350 });
-        }
-    }
     render() {
-        
         const settings = {
             prevArrow: <PrevArrow />,
             nextArrow: <NextArrow />,
@@ -72,11 +55,15 @@ export default class HomePages extends Component {
                 <div className="promo-grid">
                     <div className="BonusAd">
                         <img src={BonusAd} alt="Bonus Ad"/>
-                        <div className='text-overlay'>{this.state.balance} Баллов</div>
+                        {/* ТЕПЕРЬ БАЛЛЫ БЕРУТСЯ ИЗ ЕДИНОЙ СИСТЕМЫ И МГНОВЕННО ОБНОВЛЯЮТСЯ */}
+                        <div className='text-overlay'>{this.props.points} Баллов</div>
                     </div>
-                    <div className="BonusWheel" onClick={() => window.open('/MiniGame/bonus-roulette.html')}>
+                    
+                    {/* Переход на страницу колеса */}
+                    <div className="BonusWheel" onClick={() => window.location.href = '/MiniGame/bonus-roulette.html'}>
                         <img src={BonusWheel} alt="Bonus Wheel" />
                     </div>
+                    
                     <div className="CityRunner" onClick={() => window.location.href = '/MiniGame/runner.html'}>
                         <img src={CityRunner} alt="City Runner" />
                     </div>
@@ -92,7 +79,6 @@ export default class HomePages extends Component {
                     <Items
                         items={this.props.items.slice(0, 3)} 
                         addToOrder={this.props.addToOrder} 
-                        // ПЕРЕДАЕМ НОВЫЕ ПРОПСЫ
                         orders={this.props.orders}
                         onIncrease={this.props.onIncrease}
                         onDecrease={this.props.onDecrease}

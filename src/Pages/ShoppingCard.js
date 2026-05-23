@@ -117,6 +117,10 @@ export default class ShoppingCard extends Component {
     // ОТПРАВЛЯЕМ НА ПОЧТУ С УЧЕТОМ СКИДКИ
     this.sendEmail(totalPrice, discountAmount);
 
+    if (this.props.addOrderToHistory) {
+      this.props.addOrderToHistory(this.props.orders, totalPrice);
+    }
+
     alert("Заказ оформляется, подождите несколько секунд...");
 
     html2canvas(input, {

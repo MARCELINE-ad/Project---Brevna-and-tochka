@@ -748,3 +748,109 @@
 a {
   text-decoration: none;
 }
+
+/* Делаем селект интерактивным и убираем дефолтные стили */
+.interactive-status-select {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  appearance: none; /* Убирает стандартную стрелочку */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  text-align: center;
+  transition: opacity 0.2s ease;
+}
+
+.interactive-status-select:hover {
+  opacity: 0.9;
+}
+
+/* Контейнер для центрирования или кастомного позиционирования, если нужно */
+.status-select-container {
+  display: inline-block;
+  position: relative;
+}
+
+/* Контейнер окошка авторизации */
+.auth-container-box {
+  max-width: 450px;
+  margin: 80px auto;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eaeaea;
+  font-family: inherit;
+}
+
+.auth-box-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2b3a42;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.auth-box-subtitle {
+  font-size: 14px;
+  color: #7a8a94;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-form-elements {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a5a64;
+}
+
+/* Красивая кнопка входа */
+.btn-auth-submit {
+  background-color: #2b7551;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-top: 10px;
+}
+
+.btn-auth-submit:hover {
+  background-color: #21593d;
+}
+
+.btn-auth-submit:active {
+  transform: scale(0.98);
+}
+
+/* Дополнительный стиль для кнопки выхода красного оттенка (по желанию) */
+.btn-logout-style {
+  background-color: #fff1f1 !important;
+  color: #d9534f !important;
+  border: 1px solid #f5c6cb !important;
+}
+
+.btn-logout-style:hover {
+  background-color: #d9534f !important;
+  color: white !important;
+}

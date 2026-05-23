@@ -13,25 +13,66 @@ import { productsData } from "./data/products";
 class App extends React.Component {
   constructor(props) {
     super(props)
+    
+    // 1. Определяем, есть ли вошедший пользователь
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+    
+    // 2. Если пользователь есть, загружаем данные СТРОГО для его email
+    let userOrders = [];
+    if (currentUser && currentUser.email) {
+      userOrders = JSON.parse(localStorage.getItem(`orders_${currentUser.email}`)) || [];
+      
+      // ИЩЕМ СОХРАНЕННУЮ АВАТАРКУ ДЛЯ ЭТОГО EMAIL
+      const savedAvatar = localStorage.getItem(`avatar_${currentUser.email}`);
+      if (savedAvatar) {
+        currentUser.avatar = savedAvatar;
+      }
+    }
+
     this.state = {
       orders: [],
       allItems: productsData, 
       currentItems: productsData, 
       currentPage: 1,
       itemsPerPage: 6,
-      user: JSON.parse(localStorage.getItem('currentUser')) || null 
+      user: currentUser,
+      completedOrders: userOrders,
+      bonusPoints: parseInt(localStorage.getItem('brevna_bonus') || '0')
     }
+
     this.addToOrder = this.addToOrder.bind(this)
-    this.chooseCategory = this.chooseCategory.bind(this)
-    this.applyFilters = this.applyFilters.bind(this)
     this.deleteOrder = this.deleteOrder.bind(this)
-    this.paginate = this.paginate.bind(this)
     this.increaseQuantity = this.increaseQuantity.bind(this)
     this.decreaseQuantity = this.decreaseQuantity.bind(this)
     this.handleAuth = this.handleAuth.bind(this)
     this.handleLogout = this.handleLogout.bind(this)
     this.handleSearch = this.handleSearch.bind(this) 
-    this.updateGlobalUser = this.updateGlobalUser.bind(this) // Привязываем новый метод
+    this.updateGlobalUser = this.updateGlobalUser.bind(this)
+    this.addOrderToHistory = this.addOrderToHistory.bind(this) 
+    this.changeOrderStatus = this.changeOrderStatus.bind(this)
+    this.handleStorageChange = this.handleStorageChange.bind(this)
+  }
+
+  componentDidMount() {
+    window.addEventListener('storage', this.handleStorageChange);
+    // Polling каждые 2 секунды — на случай если игра открыта в той же вкладке
+    this.bonusInterval = setInterval(() => {
+      const current = parseInt(localStorage.getItem('brevna_bonus') || '0');
+      if (current !== this.state.bonusPoints) {
+        this.setState({ bonusPoints: current });
+      }
+    }, 2000);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('storage', this.handleStorageChange);
+    clearInterval(this.bonusInterval);
+  }
+
+  handleStorageChange(e) {
+    if (e.key === 'brevna_bonus') {
+      this.setState({ bonusPoints: parseInt(e.newValue || '0') });
+    }
   }
 
   // --- ЛОГИКА ПОИСКА ---
@@ -49,48 +90,96 @@ class App extends React.Component {
     return filtered; 
   }
 
-  // --- ЛОГИКА АВТОРИЗАЦИИ И ОБНОВЛЕНИЯ ПРОФИЛЯ ---
+  // --- ЛОГИКА АВТОРИЗАЦИИ И ПЕРЕКЛЮЧЕНИЯ АККАУНТОВ ---
   handleAuth(userData) {
-    this.setState({ user: userData })
-    localStorage.setItem('currentUser', JSON.stringify(userData))
+    // Подтягиваем историю заказов для email этого пользователя
+    const savedOrders = JSON.parse(localStorage.getItem(`orders_${userData.email}`)) || [];
+    
+    // ПОДТЯГИВАЕМ АВАТАРКУ ДЛЯ ЭТОГО EMAIL (если она была сохранена ранее)
+    const savedAvatar = localStorage.getItem(`avatar_${userData.email}`);
+    if (savedAvatar) {
+      userData.avatar = savedAvatar;
+    }
+    
+    this.setState({ 
+      user: userData,
+      completedOrders: savedOrders
+    });
+    
+    localStorage.setItem('currentUser', JSON.stringify(userData));
   }
 
   handleLogout() {
-    this.setState({ user: null })
-    localStorage.removeItem('currentUser')
+    this.setState({ 
+      user: null, 
+      completedOrders: [] 
+    });
+    localStorage.removeItem('currentUser');
   }
 
-  // Новый метод для динамического обновления данных (имя, адрес, аватарка, телефон)
+  // Динамическое обновление данных профиля (имя, адрес, аватарка, телефон)
   updateGlobalUser(updatedData) {
     this.setState(prevState => {
       const newUser = { ...prevState.user, ...updatedData };
-      localStorage.setItem('currentUser', JSON.stringify(newUser)); // Сохраняем в localStorage, чтобы данные не стёрлись
+      
+      // ЕСЛИ ИЗМЕНИЛАСЬ АВАТАРКА — сохраняем её в localStorage отдельно для этого email
+      if (updatedData.avatar && prevState.user && prevState.user.email) {
+        localStorage.setItem(`avatar_${prevState.user.email}`, updatedData.avatar);
+      }
+      
+      localStorage.setItem('currentUser', JSON.stringify(newUser)); 
       return { user: newUser };
     });
   }
 
-  // --- ЛОГИКА КАТАЛОГА ---
-  paginate(pageNumber) {
-    this.setState({ currentPage: pageNumber })
-    window.scrollTo(0, 0)
-  }
-
-  chooseCategory(category) {
-    let filtered = this.state.allItems
-    if (category !== 'all') {
-      filtered = this.state.allItems.filter(el => el.category === category)
+  // --- ИСТОРИЯ ЗАКАЗОВ ---
+  addOrderToHistory(cartItems, totalPrice) {
+    if (!this.state.user) {
+      alert("Для совершения покупок необходимо войти в аккаунт!");
+      return;
     }
-    this.setState({ currentItems: filtered, currentPage: 1 })
+
+    const newOrder = {
+      id: `#${Math.floor(10000 + Math.random() * 90000)}`, 
+      items: cartItems.map(item => `${item.title} (x${item.quantity || 1})`).join(', '),
+      price: totalPrice,
+      status: 'В пути',
+      statusColor: 'orange',
+      icon: '⇄'
+    };
+
+    this.setState(prevState => {
+      const updatedHistory = [newOrder, ...prevState.completedOrders];
+      localStorage.setItem(`orders_${prevState.user.email}`, JSON.stringify(updatedHistory)); 
+      return { completedOrders: updatedHistory };
+    });
   }
 
-  applyFilters(filters) {
-    let filtered = this.state.allItems;
-    if (filters.inStock) filtered = filtered.filter(el => el.inStock === true);
-    if (filters.isNew) filtered = filtered.filter(el => el.isNew === true);
-    const min = parseFloat(filters.minPrice) || 0;
-    const max = parseFloat(filters.maxPrice) || Infinity;
-    filtered = filtered.filter(el => el.price >= min && el.price <= max);
-    this.setState({ currentItems: filtered, currentPage: 1 });
+  changeOrderStatus(orderId, newStatus) {
+    let statusColor = 'orange';
+    let icon = '⇄';
+
+    if (newStatus === 'Доставлен') {
+      statusColor = 'green';
+      icon = '✓';
+    } else if (newStatus === 'Отменён') {
+      statusColor = 'red';
+      icon = '✕';
+    }
+
+    this.setState(prevState => {
+      const updatedOrders = prevState.completedOrders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, status: newStatus, statusColor, icon };
+        }
+        return order;
+      });
+
+      if (prevState.user) {
+        localStorage.setItem(`orders_${prevState.user.email}`, JSON.stringify(updatedOrders));
+      }
+      return { completedOrders: updatedOrders };
+    });
   }
 
   // --- ЛОГИКА КОРЗИНЫ ---
@@ -120,7 +209,6 @@ class App extends React.Component {
 
   decreaseQuantity(id) {
     const itemInOrder = this.state.orders.find(el => el.id === id);
-
     if (itemInOrder && itemInOrder.quantity > 1) {
       this.setState({
         orders: this.state.orders.map(el =>
@@ -154,7 +242,14 @@ class App extends React.Component {
                 orders={this.state.orders}
                 onIncrease={this.increaseQuantity}
                 onDecrease={this.decreaseQuantity}
-                onChoose={this.chooseCategory} 
+                points={this.state.bonusPoints}
+                onChoose={(category) => {
+                  let filtered = this.state.allItems;
+                  if (category !== 'all') {
+                    filtered = this.state.allItems.filter(el => el.category === category);
+                  }
+                  this.setState({ currentItems: filtered, currentPage: 1 });
+                }} 
                 addToOrder={this.addToOrder} 
               />
             } />
@@ -168,9 +263,26 @@ class App extends React.Component {
                 totalItems={this.state.currentItems.length}
                 itemsPerPage={this.state.itemsPerPage}
                 currentPage={this.state.currentPage}
-                paginate={this.paginate}
-                onChoose={this.chooseCategory} 
-                applyFilters={this.applyFilters} 
+                paginate={(pageNumber) => {
+                  this.setState({ currentPage: pageNumber });
+                  window.scrollTo(0, 0);
+                }}
+                onChoose={(category) => {
+                  let filtered = this.state.allItems;
+                  if (category !== 'all') {
+                    filtered = this.state.allItems.filter(el => el.category === category);
+                  }
+                  this.setState({ currentItems: filtered, currentPage: 1 });
+                }} 
+                applyFilters={(filters) => {
+                  let filtered = this.state.allItems;
+                  if (filters.inStock) filtered = filtered.filter(el => el.inStock === true);
+                  if (filters.isNew) filtered = filtered.filter(el => el.isNew === true);
+                  const min = parseFloat(filters.minPrice) || 0;
+                  const max = parseFloat(filters.maxPrice) || Infinity;
+                  filtered = filtered.filter(el => el.price >= min && el.price <= max);
+                  this.setState({ currentItems: filtered, currentPage: 1 });
+                }} 
                 addToOrder={this.addToOrder} 
               /> 
             } />
@@ -188,25 +300,28 @@ class App extends React.Component {
             <Route path="/ShoppingCard" element={
               <ShoppingCard 
                 orders={this.state.orders} 
-                user={this.state.user} // ПЕРЕДАЕМ USERА: теперь корзина знает адрес и телефон
+                user={this.state.user}
                 onDelete={this.deleteOrder}
                 onIncrease={this.increaseQuantity}
                 onDecrease={this.decreaseQuantity}
                 onClear={() => this.setState({ orders: [] })}
+                addOrderToHistory={this.addOrderToHistory}
               />
             } />
 
             <Route path="/Profil" element={
               <Profil 
                 user={this.state.user} 
-                items={this.state.items}     // <--- НАПРАВЛЯЕМ СЮДА НАСТОЯЩИЕ ТОВАРЫ КАТАЛОГА
+                items={this.state.allItems}
                 orders={this.state.orders} 
+                completedOrders={this.state.completedOrders}
                 addToOrder={this.addToOrder} 
                 onIncrease={this.increaseQuantity} 
                 onDecrease={this.decreaseQuantity} 
                 onAuth={this.handleAuth} 
                 onLogout={this.handleLogout} 
                 updateGlobalUser={this.updateGlobalUser} 
+                changeOrderStatus={this.changeOrderStatus} 
               />
             } />
 
